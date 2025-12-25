@@ -449,27 +449,27 @@ class StrategicIntelligence {
         if (parseFloat(marketShare.competitorShare) > parseFloat(marketShare.erablueShare)) {
             recommendations.push({
                 priority: 'CRITICAL',
-                category: 'Market Share',
-                action: 'Competitors dominate the area. Aggressive expansion and marketing required.',
-                metric: `Competitor share: ${marketShare.competitorShare}% vs Erablue: ${marketShare.erablueShare}%`
+                category: 'Thị phần',
+                action: 'Đối thủ đang thống trị khu vực. Cần mở rộng và tiếp thị mạnh mẽ.',
+                metric: `Thị phần đối thủ: ${marketShare.competitorShare}% vs Erablue: ${marketShare.erablueShare}%`
             });
         }
 
         if (parseFloat(marketShare.uncoveredShare) > 30) {
             recommendations.push({
                 priority: 'HIGH',
-                category: 'Coverage Gap',
-                action: 'Significant whitespace available. Consider new store locations.',
-                metric: `Uncovered area: ${marketShare.uncoveredShare}%`
+                category: 'Vùng trống',
+                action: 'Có nhiều vùng trống đáng kể. Cân nhắc mở thêm cửa hàng mới.',
+                metric: `Vùng chưa phủ sóng: ${marketShare.uncoveredShare}%`
             });
         }
 
         if (parseFloat(marketShare.contestedShare) > 20) {
             recommendations.push({
                 priority: 'MEDIUM',
-                category: 'Competition',
-                action: 'High competition zones identified. Focus on differentiation and loyalty programs.',
-                metric: `Contested zones: ${marketShare.contestedShare}%`
+                category: 'Cạnh tranh',
+                action: 'Xác định nhiều vùng cạnh tranh cao. Tập trung vào khác biệt hóa và chương trình khách hàng thân thiết.',
+                metric: `Vùng tranh chấp: ${marketShare.contestedShare}%`
             });
         }
 
@@ -478,9 +478,9 @@ class StrategicIntelligence {
         if (criticalThreats.length > 0) {
             recommendations.push({
                 priority: 'URGENT',
-                category: 'Competitor Threat',
-                action: `${criticalThreats.length} competitor location(s) require immediate response campaign.`,
-                metric: `Top threat: ${criticalThreats[0].competitor.name}`
+                category: 'Đối thủ đe dọa',
+                action: `${criticalThreats.length} vị trí đối thủ cần phản hồi chiến dịch ngay lập tức.`,
+                metric: `Đe dọa lớn nhất: ${criticalThreats[0].competitor.name}`
             });
         }
 
