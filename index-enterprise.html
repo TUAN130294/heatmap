@@ -384,6 +384,41 @@
                 </div>
             </div>
 
+            <!-- Multi-Store Mode -->
+            <div class="p-5 border-b border-border-dark/50">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <label class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Chế độ nhiều
+                            shop</label>
+                        <p class="text-gray-500 text-[10px] mt-0.5">Chọn nhiều shop để xem heatmap cụm</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-multi-store" class="sr-only peer">
+                        <div
+                            class="w-9 h-5 bg-border-dark rounded-full peer peer-checked:bg-green-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:bg-white">
+                        </div>
+                    </label>
+                </div>
+                <div id="selected-stores-info" class="hidden">
+                    <div
+                        class="flex items-center justify-between p-2 bg-green-500/10 rounded-lg border border-green-500/30">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-sm">check_circle</span>
+                            <span id="selected-stores-count" class="text-green-400 text-xs font-bold">0 shops đã
+                                chọn</span>
+                        </div>
+                        <button onclick="EnterpriseApp.showMultiStoreHeatmap()"
+                            class="text-xs bg-green-500 text-white px-2 py-1 rounded font-medium hover:bg-green-600 transition-colors">
+                            Xem Heatmap
+                        </button>
+                    </div>
+                    <button onclick="EnterpriseApp.clearSelectedStores()"
+                        class="w-full mt-2 text-xs text-gray-500 hover:text-red-400 transition-colors">
+                        Xóa lựa chọn
+                    </button>
+                </div>
+            </div>
+
             <!-- BI Intelligence -->
             <div class="p-5 border-b border-border-dark/50">
                 <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Phân tích Kinh doanh</h3>
@@ -659,14 +694,24 @@
 
     <!-- Enterprise App Logic -->
     <script>
+        // ===== AI API CONFIGURATION =====
+        const AI_CONFIG = {
+            BASE_URL: 'https://api.key4u.shop',
+            MODEL: 'gemini-2.5-flash-lite-preview-06-17-nothinking',
+            API_KEY: '' // User can set this
+        };
+
         // ===== ENTERPRISE APP =====
         const EnterpriseApp = {
             map: null,
             heatLayer: null,
+            flyerZoneLayer: null, // For flyer distribution heatmap (different color)
             storeMarkers: L.layerGroup(),
             competitorMarkers: L.layerGroup(),
             coverageLayer: L.layerGroup(),
             analysisLayer: L.layerGroup(),
+            selectedStores: [], // Multi-store selection
+            multiSelectMode: false, // Toggle for multi-store mode
 
             init() {
                 this.initMap();
@@ -899,6 +944,19 @@
 
                 document.getElementById('btn-export').addEventListener('click', () => {
                     this.exportAllData();
+                });
+
+                // Multi-store mode toggle
+                document.getElementById('toggle-multi-store').addEventListener('change', (e) => {
+                    this.multiSelectMode = e.target.checked;
+                    const infoPanel = document.getElementById('selected-stores-info');
+                    if (e.target.checked) {
+                        infoPanel.classList.remove('hidden');
+                        this.showToast('Chế độ chọn nhiều shop: Nhấn vào các shop để chọn', 'info');
+                    } else {
+                        infoPanel.classList.add('hidden');
+                        this.clearSelectedStores();
+                    }
                 });
             },
 
@@ -1189,6 +1247,125 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url; a.download = `erablue-export-${new Date().toISOString().split('T')[0]}.json`; a.click();
                 this.showToast('Data exported', 'success');
+            },
+
+            // ===== MULTI-STORE SELECTION =====
+
+            toggleStoreSelection(store) {
+                const index = this.selectedStores.findIndex(s => s.id === store.id);
+                if (index === -1) {
+                    this.selectedStores.push(store);
+                    this.showToast(`Đã chọn: ${store.name}`, 'success');
+                } else {
+                    this.selectedStores.splice(index, 1);
+                    this.showToast(`Đã bỏ chọn: ${store.name}`, 'info');
+                }
+                this.updateSelectedStoresUI();
+                this.showStores(); // Refresh markers to show selection state
+            },
+
+            updateSelectedStoresUI() {
+                const countEl = document.getElementById('selected-stores-count');
+                countEl.textContent = `${this.selectedStores.length} shops đã chọn`;
+            },
+
+            clearSelectedStores() {
+                this.selectedStores = [];
+                this.updateSelectedStoresUI();
+                if (this.flyerZoneLayer) {
+                    this.map.removeLayer(this.flyerZoneLayer);
+                    this.flyerZoneLayer = null;
+                }
+                this.showStores();
+                this.showToast('Đã xóa lựa chọn', 'info');
+            },
+
+            showMultiStoreHeatmap() {
+                if (this.selectedStores.length === 0) {
+                    this.showToast('Vui lòng chọn ít nhất 1 shop', 'warning');
+                    return;
+                }
+
+                this.clearHeatmap();
+
+                // Get orders for selected stores
+                const heatData = [];
+                this.selectedStores.forEach(store => {
+                    const storeOrders = ORDERS_DATA.filter(o => o.storeId === store.id);
+                    storeOrders.forEach(order => {
+                        const intensity = order.orderValue / 1000000;
+                        heatData.push([order.customerLat, order.customerLng, intensity]);
+                    });
+                });
+
+                if (heatData.length === 0) {
+                    this.showToast('Không có đơn hàng cho các shop đã chọn', 'warning');
+                    return;
+                }
+
+                this.heatLayer = L.heatLayer(heatData, {
+                    radius: 30,
+                    blur: 20,
+                    maxZoom: 15,
+                    gradient: { 0.2: '#22c55e', 0.5: '#3b82f6', 0.8: '#8b5cf6', 1.0: '#ec4899' }
+                }).addTo(this.map);
+
+                // Fit map to show all selected stores
+                const bounds = L.latLngBounds(this.selectedStores.map(s => [s.latitude, s.longitude]));
+                this.map.fitBounds(bounds.pad(0.3));
+
+                this.showToast(`Heatmap cụm ${this.selectedStores.length} shops: ${heatData.length} đơn hàng`, 'success');
+            },
+
+            // ===== FLYER ZONE (Vùng phát tờ rơi) =====
+
+            showFlyerZone(store) {
+                // Clear previous flyer zone
+                if (this.flyerZoneLayer) {
+                    this.map.removeLayer(this.flyerZoneLayer);
+                }
+
+                // Find orders far from this store (need flyer outreach)
+                const radiusKm = 4; // Areas beyond 4km need flyers
+                const flyerHeatData = [];
+
+                // Find gap areas near competitors
+                COMPETITORS_DATA.forEach(comp => {
+                    const distToStore = this.calculateDistance(store.latitude, store.longitude, comp.latitude, comp.longitude);
+                    if (distToStore <= 6 && distToStore >= 2) {
+                        // Area between store and competitor is flyer zone
+                        flyerHeatData.push([comp.latitude, comp.longitude, 0.8]);
+                    }
+                });
+
+                // Find areas with orders but far from store
+                const storeOrders = ORDERS_DATA.filter(o => o.storeId === store.id);
+                const ordersByDistance = storeOrders.map(o => ({
+                    ...o,
+                    dist: this.calculateDistance(store.latitude, store.longitude, o.customerLat, o.customerLng)
+                })).filter(o => o.dist >= 3);
+
+                ordersByDistance.forEach(o => {
+                    flyerHeatData.push([o.customerLat, o.customerLng, 0.6]);
+                });
+
+                if (flyerHeatData.length > 0) {
+                    this.flyerZoneLayer = L.heatLayer(flyerHeatData, {
+                        radius: 35,
+                        blur: 25,
+                        maxZoom: 15,
+                        gradient: {
+                            0.2: 'rgba(251, 146, 60, 0.3)',  // Orange
+                            0.5: 'rgba(249, 115, 22, 0.5)',
+                            0.8: 'rgba(234, 88, 12, 0.7)',
+                            1.0: 'rgba(194, 65, 12, 0.9)'    // Dark Orange
+                        }
+                    }).addTo(this.map);
+
+                    this.showToast(`Vùng phát tờ rơi: ${flyerHeatData.length} điểm tiềm năng`, 'warning');
+                } else {
+                    this.showToast('Không có vùng cần phát tờ rơi', 'info');
+                }
             },
 
             // ===== CLICK TO ANALYZE =====
@@ -1693,7 +1870,11 @@
                             </div>
                             <div style="margin-top: 10px; display: flex; gap: 6px;">
                                 <button onclick="EnterpriseApp.focusStore('${store.id}')" style="flex: 1; padding: 6px; background: #1e70eb; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">🔥 Heatmap</button>
-                                <button onclick="EnterpriseApp.showStoreAnalysis('${store.id}')" style="flex: 1; padding: 6px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11px; cursor: pointer;">📊 Phân tích</button>
+                                <button onclick="EnterpriseApp.showFlyerZoneById('${store.id}')" style="flex: 1; padding: 6px; background: #f97316; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">📢 Tờ rơi</button>
+                            </div>
+                            <div style="margin-top: 6px; display: flex; gap: 6px;">
+                                <button onclick="EnterpriseApp.toggleStoreById('${store.id}')" id="select-btn-${store.id}" style="flex: 1; padding: 6px; background: ${this.selectedStores.some(s => s.id === store.id) ? '#22c55e' : '#f3f4f6'}; color: ${this.selectedStores.some(s => s.id === store.id) ? 'white' : '#374151'}; border: 1px solid ${this.selectedStores.some(s => s.id === store.id) ? '#22c55e' : '#d1d5db'}; border-radius: 4px; font-size: 11px; cursor: pointer;">${this.selectedStores.some(s => s.id === store.id) ? '✓ Đã chọn' : '+ Chọn shop'}</button>
+                                <button onclick="EnterpriseApp.showStoreAnalysis('${store.id}')" style="flex: 1; padding: 6px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11px; cursor: pointer;">📊 Chi tiết</button>
                             </div>
                         </div>
                     `;
@@ -1739,6 +1920,22 @@
                         <div class="flex justify-between"><span class="text-gray-400">Avg Value</span><span class="text-green-400 font-mono">Rp ${(avgValue / 1000).toFixed(0)}K</span></div>
                     </div>
                 `);
+            },
+
+            showFlyerZoneById(storeId) {
+                const store = STORES_DATA.find(s => s.id === storeId);
+                if (store) {
+                    this.map.closePopup();
+                    this.showFlyerZone(store);
+                }
+            },
+
+            toggleStoreById(storeId) {
+                const store = STORES_DATA.find(s => s.id === storeId);
+                if (store) {
+                    this.map.closePopup();
+                    this.toggleStoreSelection(store);
+                }
             },
 
             showCompetitors() {
