@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html class="dark" lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Erablue - Bảng điều khiển Doanh nghiệp</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e70eb",
+                        "deep-space": "#0f1115",
+                        "surface-dark": "#1A1D23",
+                        "border-dark": "#282f39",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["Roboto Mono", "monospace"],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #282f39;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #3b4452;
+        }
+
+        /* Leaflet overrides */
+        .leaflet-container {
+            background: #101722 !important;
+        }
+
+        .leaflet-control-zoom {
+            border: 1px solid #282f39 !important;
+        }
+
+        .leaflet-control-zoom a {
+            background: #1A1D23 !important;
+            color: white !important;
+            border-color: #282f39 !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+            background: #282f39 !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: #1A1D23;
+            color: white;
+            border: 1px solid #282f39;
+        }
+
+        .leaflet-popup-tip {
+            background: #1A1D23;
+        }
+    </style>
+</head>
+
+<body class="bg-deep-space text-white font-display h-screen flex flex-col overflow-hidden">
+
+    <!-- ===== WELCOME MODAL ===== -->
+    <div id="welcome-modal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+        <div
+            class="bg-surface-dark border border-border-dark rounded-2xl max-w-lg w-full mx-4 overflow-hidden shadow-2xl animate-pulse-once">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-primary to-cyan-500 p-6 text-center">
+                <div class="size-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-4xl text-white">analytics</span>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-1">Chào mừng đến với Erablue</h2>
+                <p class="text-white/80 text-sm">Hệ thống Phân tích Địa lý & Business Intelligence</p>
+            </div>
+
+            <!-- Guide Steps -->
+            <div class="p-6 space-y-4">
+                <h3 class="text-white font-bold text-sm uppercase tracking-wider mb-3">🚀 Hướng dẫn nhanh</h3>
+
+                <div class="flex items-start gap-4 p-3 bg-deep-space rounded-lg border border-border-dark/50">
+                    <div class="size-8 bg-primary/20 rounded-lg flex items-center justify-center shrink-0">
+                        <span class="text-primary font-bold">1</span>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-sm">Xem bản đồ nhiệt đơn hàng</h4>
+                        <p class="text-gray-400 text-xs mt-1">Bật toggle "Bản đồ nhiệt đơn hàng" ở sidebar trái để xem
+                            phân bố khách hàng</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-3 bg-deep-space rounded-lg border border-border-dark/50">
+                    <div class="size-8 bg-cyan-500/20 rounded-lg flex items-center justify-center shrink-0">
+                        <span class="text-cyan-400 font-bold">2</span>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-sm">Phân tích khu vực</h4>
+                        <p class="text-gray-400 text-xs mt-1">Bật "Nhấn để phân tích" rồi click vào bản đồ để xem doanh
+                            thu & nhân khẩu học</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-3 bg-deep-space rounded-lg border border-border-dark/50">
+                    <div class="size-8 bg-amber-500/20 rounded-lg flex items-center justify-center shrink-0">
+                        <span class="text-amber-400 font-bold">3</span>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-sm">Phân tích kinh doanh (BI)</h4>
+                        <p class="text-gray-400 text-xs mt-1">Sử dụng các nút BI như "Thị phần", "Vùng vàng", "Gợi ý từ
+                            AI" để có insights</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-3 bg-deep-space rounded-lg border border-border-dark/50">
+                    <div class="size-8 bg-green-500/20 rounded-lg flex items-center justify-center shrink-0">
+                        <span class="text-green-400 font-bold">4</span>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-sm">Click vào siêu thị</h4>
+                        <p class="text-gray-400 text-xs mt-1">Click vào marker xanh trên bản đồ để xem chi tiết doanh
+                            thu từng store</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 pb-6 flex gap-3">
+                <button onclick="closeWelcomeModal()"
+                    class="flex-1 py-3 bg-gradient-to-r from-primary to-cyan-500 text-white font-bold rounded-lg hover:opacity-90 transition-opacity">
+                    Bắt đầu khám phá
+                </button>
+                <button onclick="closeWelcomeModal(true)"
+                    class="px-4 py-3 bg-border-dark text-gray-400 font-medium rounded-lg hover:text-white transition-colors text-sm">
+                    Không hiện lại
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Welcome Modal Logic
+        function showWelcomeModal() {
+            const dismissed = localStorage.getItem('erablue_welcome_dismissed');
+            if (!dismissed) {
+                document.getElementById('welcome-modal').classList.remove('hidden');
+            }
+        }
+
+        function closeWelcomeModal(dontShowAgain = false) {
+            document.getElementById('welcome-modal').classList.add('hidden');
+            if (dontShowAgain) {
+                localStorage.setItem('erablue_welcome_dismissed', 'true');
+            }
+        }
+
+        // Show modal on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(showWelcomeModal, 500);
+        });
+    </script>
+
+    <!-- ===== TOP HEADER ===== -->
+    <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-border-dark px-6 py-3 bg-deep-space shrink-0 z-20">
+        <div class="flex items-center gap-4 text-white">
+            <div class="size-8 flex items-center justify-center bg-primary/20 rounded-lg text-primary">
+                <span class="material-symbols-outlined">analytics</span>
+            </div>
+            <div>
+                <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Erablue</h2>
+                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Hệ thống Phân tích</span>
+            </div>
+        </div>
+
+        <div class="flex flex-1 justify-end gap-6 items-center">
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-gray-400">
+                <a class="text-white hover:text-primary transition-colors" href="#">Tổng quan</a>
+                <a class="hover:text-white transition-colors" href="#">Báo cáo</a>
+                <a class="hover:text-white transition-colors" href="#">Cài đặt</a>
+            </nav>
+            <div class="h-6 w-px bg-border-dark"></div>
+            <div class="flex gap-2">
+                <button id="btn-help" onclick="document.getElementById('welcome-modal').classList.remove('hidden')"
+                    class="flex items-center justify-center rounded-lg size-10 hover:bg-border-dark text-white transition-colors"
+                    title="Hướng dẫn">
+                    <span class="material-symbols-outlined">help</span>
+                </button>
+                <button id="btn-export"
+                    class="flex items-center justify-center rounded-lg size-10 hover:bg-border-dark text-white transition-colors"
+                    title="Xuất dữ liệu">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+                <button
+                    class="flex items-center justify-center rounded-lg size-10 hover:bg-border-dark text-white transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <div
+                    class="bg-primary/30 rounded-full size-10 flex items-center justify-center text-primary font-bold text-sm">
+                    EB</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== MAIN LAYOUT ===== -->
+    <div class="flex flex-1 overflow-hidden relative">
+
+        <!-- LEFT SIDEBAR: Control Panel -->
+        <aside
+            class="w-[320px] bg-deep-space border-r border-border-dark flex flex-col overflow-y-auto shrink-0 z-10 custom-scrollbar">
+
+            <!-- Region Filter -->
+            <div class="p-5 border-b border-border-dark/50">
+                <h3 class="text-white tracking-tight text-xl font-bold leading-tight pb-4">Bảng điều khiển</h3>
+
+                <div class="space-y-2 mb-6">
+                    <label class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Phân tích khu
+                        vực</label>
+                    <div class="relative">
+                        <select id="city-filter"
+                            class="w-full bg-surface-dark border border-border-dark text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-3 pr-10 appearance-none font-medium">
+                            <option value="">Toàn bộ Jakarta</option>
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coverage Radius Slider -->
+                <div class="space-y-3 mb-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Bán kính
+                            phủ sóng</label>
+                        <span id="coverage-radius-value"
+                            class="text-primary text-sm font-mono font-bold bg-primary/10 px-2 py-0.5 rounded">5
+                            km</span>
+                    </div>
+                    <input type="range" id="coverage-radius" min="1" max="15" value="5"
+                        class="w-full h-2 bg-border-dark rounded-full appearance-none cursor-pointer accent-primary" />
+                </div>
+
+                <!-- Heatmap Intensity -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Độ đậm
+                            Heatmap</label>
+                        <span id="intensity-value"
+                            class="text-primary text-sm font-mono font-bold bg-primary/10 px-2 py-0.5 rounded">25</span>
+                    </div>
+                    <input type="range" id="heatmap-intensity" min="10" max="50" value="25"
+                        class="w-full h-2 bg-border-dark rounded-full appearance-none cursor-pointer accent-primary" />
+                </div>
+
+                <!-- Click to Analyze -->
+                <div class="space-y-3 mt-4 pt-4 border-t border-border-dark/50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Nhấn để
+                                phân tích</label>
+                            <p class="text-gray-500 text-[10px] mt-0.5">Nhấn vào bản đồ để xem doanh thu khu vực</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-click-analyze" class="sr-only peer">
+                            <div
+                                class="w-9 h-5 bg-border-dark rounded-full peer peer-checked:bg-cyan-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:bg-white">
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Analysis Radius -->
+                    <div class="flex justify-between items-center">
+                        <label class="text-gray-400 text-xs font-semibold">Bán kính phân tích</label>
+                        <span id="analysis-radius-value"
+                            class="text-cyan-400 text-xs font-mono font-bold bg-cyan-500/10 px-2 py-0.5 rounded">2
+                            km</span>
+                    </div>
+                    <input type="range" id="analysis-radius" min="1" max="10" value="2" step="0.5"
+                        class="w-full h-2 bg-border-dark rounded-full appearance-none cursor-pointer accent-cyan-500" />
+                </div>
+            </div>
+
+            <!-- Map Layers -->
+            <div class="p-5 border-b border-border-dark/50">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-white text-sm font-bold">Lớp bản đồ</h3>
+                    <button id="btn-clear-all" class="text-xs text-primary hover:text-white transition-colors">Đặt
+                        lại</button>
+                </div>
+                <div class="space-y-3">
+                    <!-- Toggle: Competitors -->
+                    <label class="flex items-center justify-between group cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" id="toggle-competitors" checked class="peer sr-only" />
+                                <div
+                                    class="w-9 h-5 bg-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary">
+                                </div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Đối
+                                thủ
+                                cạnh tranh</span>
+                        </div>
+                        <span class="material-symbols-outlined text-red-400 text-sm">storefront</span>
+                    </label>
+
+                    <!-- Toggle: Our Stores -->
+                    <label class="flex items-center justify-between group cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" id="toggle-stores" checked class="peer sr-only" />
+                                <div
+                                    class="w-9 h-5 bg-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary">
+                                </div>
+                            </div>
+                            <span
+                                class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Siêu
+                                thị
+                                Erablue</span>
+                        </div>
+                        <span class="material-symbols-outlined text-primary text-sm">flag</span>
+                    </label>
+
+                    <!-- Toggle: Heatmap -->
+                    <label class="flex items-center justify-between group cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" id="toggle-heatmap" class="peer sr-only" />
+                                <div
+                                    class="w-9 h-5 bg-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary">
+                                </div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Bản
+                                đồ
+                                nhiệt đơn hàng</span>
+                        </div>
+                        <span class="material-symbols-outlined text-orange-500 text-sm">local_fire_department</span>
+                    </label>
+
+                    <!-- Toggle: Coverage Zones -->
+                    <label class="flex items-center justify-between group cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" id="toggle-coverage" class="peer sr-only" />
+                                <div
+                                    class="w-9 h-5 bg-border-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary">
+                                </div>
+                            </div>
+                            <span
+                                class="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Vùng
+                                phủ sóng</span>
+                        </div>
+                        <span class="material-symbols-outlined text-cyan-400 text-sm">radio_button_checked</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- BI Intelligence -->
+            <div class="p-5 border-b border-border-dark/50">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Phân tích Kinh doanh</h3>
+                <div class="space-y-1">
+                    <button id="btn-market-share"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-primary transition-colors text-[20px]">trending_up</span>
+                        <span class="text-sm font-medium">Thị phần</span>
+                    </button>
+                    <button id="btn-threat-score"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-red-400 transition-colors text-[20px]">warning</span>
+                        <span class="text-sm font-medium">Đánh giá đối thủ</span>
+                    </button>
+                    <button id="btn-strategic-analysis"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-yellow-500 transition-colors text-[20px]">star</span>
+                        <span class="text-sm font-medium">Vùng vàng</span>
+                    </button>
+                    <button id="btn-gap-analysis"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-cyan-400 transition-colors text-[20px]">target</span>
+                        <span class="text-sm font-medium">Phân tích lỗ hổng</span>
+                    </button>
+                    <button id="btn-expansion-priority"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-green-400 transition-colors text-[20px]">add_location</span>
+                        <span class="text-sm font-medium">Ưu tiên mở rộng</span>
+                    </button>
+                    <button id="btn-revenue-zones"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-amber-400 transition-colors text-[20px]">paid</span>
+                        <span class="text-sm font-medium">Vùng doanh thu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Advanced Analysis -->
+            <div class="p-5 border-b border-border-dark/50">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Phân tích nâng cao</h3>
+                <div class="space-y-1">
+                    <button id="btn-grid-analysis"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-purple-400 transition-colors text-[20px]">grid_view</span>
+                        <span class="text-sm font-medium">Phân tích lưới</span>
+                    </button>
+                    <button id="btn-competitor-heatmap"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-orange-400 transition-colors text-[20px]">whatshot</span>
+                        <span class="text-sm font-medium">Mật độ đối thủ</span>
+                    </button>
+                </div>
+
+                <!-- Grid Size Slider -->
+                <div class="space-y-2 mt-4">
+                    <div class="flex justify-between items-center">
+                        <label class="text-gray-400 text-xs font-semibold">Kích thước ô lưới</label>
+                        <span id="grid-size-value"
+                            class="text-purple-400 text-xs font-mono font-bold bg-purple-500/10 px-2 py-0.5 rounded">2
+                            km</span>
+                    </div>
+                    <input type="range" id="grid-size" min="1" max="5" value="2"
+                        class="w-full h-2 bg-border-dark rounded-full appearance-none cursor-pointer accent-purple-500" />
+                </div>
+            </div>
+
+            <!-- Competitor Brands Filter -->
+            <div class="p-5 border-b border-border-dark/50">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Lọc thương hiệu đối thủ
+                </h3>
+                <div class="space-y-2" id="brand-filters">
+                    <!-- Blibli -->
+                    <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-dark cursor-pointer group">
+                        <input type="checkbox" id="brand-blibli" value="blibli" checked
+                            class="w-4 h-4 accent-blue-500" />
+                        <div class="w-6 h-6 rounded bg-blue-500 flex items-center justify-center text-white text-xs">B
+                        </div>
+                        <span class="text-sm text-gray-300 group-hover:text-white">Blibli Electronics</span>
+                    </label>
+                    <!-- Electronics City -->
+                    <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-dark cursor-pointer group">
+                        <input type="checkbox" id="brand-electronicscity" value="electronicscity" checked
+                            class="w-4 h-4 accent-orange-500" />
+                        <div class="w-6 h-6 rounded bg-orange-500 flex items-center justify-center text-white text-xs">E
+                        </div>
+                        <span class="text-sm text-gray-300 group-hover:text-white">Electronics City</span>
+                    </label>
+                </div>
+                <button id="btn-apply-brand-filter"
+                    class="w-full mt-3 py-2 bg-surface-dark hover:bg-border-dark text-sm text-gray-300 rounded-lg transition-colors">
+                    Áp dụng bộ lọc
+                </button>
+            </div>
+
+            <!-- Strategic Insights -->
+            <div class="p-5 border-b border-border-dark/50">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Thông tin chiến lược</h3>
+                <div class="space-y-2">
+                    <button id="btn-strategic-dashboard"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 text-purple-300 hover:text-white transition-colors group text-left border border-purple-500/30">
+                        <span class="material-symbols-outlined text-purple-400 text-[20px]">dashboard</span>
+                        <span class="text-sm font-medium">Bảng điều khiển chiến lược</span>
+                    </button>
+                    <button id="btn-strategic-recommendations"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 text-amber-300 hover:text-white transition-colors group text-left border border-amber-500/30">
+                        <span class="material-symbols-outlined text-amber-400 text-[20px]">lightbulb</span>
+                        <span class="text-sm font-medium">Gợi ý từ AI</span>
+                    </button>
+                    <button id="btn-cac-analysis"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-green-400 transition-colors text-[20px]">savings</span>
+                        <span class="text-sm font-medium">Phân tích CAC</span>
+                    </button>
+                </div>
+
+                <!-- Recommendations Panel -->
+                <div id="recommendations-panel" class="mt-4 hidden">
+                    <div
+                        class="bg-gradient-to-br from-surface-dark to-[#1a1f2e] rounded-xl border border-border-dark overflow-hidden">
+                        <div class="px-4 py-3 border-b border-border-dark/50 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-amber-400">lightbulb</span>
+                                <span class="text-sm font-bold text-white">Gợi ý chiến lược</span>
+                            </div>
+                            <button onclick="document.getElementById('recommendations-panel').classList.add('hidden')"
+                                class="text-gray-500 hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+                        <div id="recommendations-list"
+                            class="p-4 space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="p-5 flex-1">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">Xuất dữ liệu</h3>
+                <div class="space-y-2">
+                    <button id="btn-full-report"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary hover:text-white transition-colors group text-left border border-primary/30">
+                        <span class="material-symbols-outlined text-[20px]">description</span>
+                        <span class="text-sm font-medium">Báo cáo BI đầy đủ</span>
+                    </button>
+                    <button id="btn-export-gap"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-cyan-400 transition-colors text-[20px]">download</span>
+                        <span class="text-sm font-medium">Xuất báo cáo lỗ hổng</span>
+                    </button>
+                    <button id="btn-export-strategic"
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-dark text-gray-300 hover:text-white transition-colors group text-left">
+                        <span
+                            class="material-symbols-outlined text-gray-500 group-hover:text-yellow-400 transition-colors text-[20px]">download</span>
+                        <span class="text-sm font-medium">Xuất báo cáo chiến lược</span>
+                    </button>
+                </div>
+
+                <!-- Analysis Result Panel -->
+                <div id="bi-result" class="mt-4 p-3 bg-surface-dark rounded-lg border border-border-dark hidden">
+                    <div id="bi-result-content"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER: Interactive Map -->
+        <main class="flex-1 flex flex-col relative bg-[#101722] overflow-hidden">
+            <!-- Map Container -->
+            <div id="map" class="flex-1 w-full"></div>
+
+            <!-- Loading Overlay -->
+            <div id="loading-overlay"
+                class="absolute inset-0 bg-deep-space/90 flex items-center justify-center z-50 hidden">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-gray-400 text-sm">Loading data...</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR: Quick Stats -->
+        <aside
+            class="w-[320px] bg-deep-space border-l border-border-dark flex flex-col shrink-0 z-10 overflow-y-auto custom-scrollbar">
+            <div class="p-5">
+                <h3 class="text-white tracking-tight text-xl font-bold leading-tight pb-4">Thống kê nhanh</h3>
+
+                <!-- KPI Cards -->
+                <div class="grid gap-4 mb-6">
+                    <!-- Total Revenue -->
+                    <div
+                        class="bg-surface-dark border border-border-dark rounded-xl p-4 relative overflow-hidden group hover:border-primary/50 transition-colors">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-4xl text-primary">payments</span>
+                        </div>
+                        <p class="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Tổng doanh thu</p>
+                        <h4 id="stat-revenue" class="text-white text-2xl font-mono font-bold mb-2">Rp 0</h4>
+                        <div class="flex items-center gap-1 text-xs font-medium text-green-400">
+                            <span class="material-symbols-outlined text-sm">arrow_upward</span>
+                            <span>+12.5% so với tháng trước</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Orders -->
+                    <div
+                        class="bg-surface-dark border border-border-dark rounded-xl p-4 relative overflow-hidden group hover:border-primary/50 transition-colors">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-4xl text-purple-500">shopping_cart</span>
+                        </div>
+                        <p class="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Tổng đơn hàng</p>
+                        <h4 id="stat-orders" class="text-white text-2xl font-mono font-bold mb-2">0</h4>
+                        <div class="flex items-center gap-1 text-xs font-medium text-green-400">
+                            <span class="material-symbols-outlined text-sm">arrow_upward</span>
+                            <span>+3.2% so với tháng trước</span>
+                        </div>
+                    </div>
+
+                    <!-- Competitors -->
+                    <div
+                        class="bg-surface-dark border border-border-dark rounded-xl p-4 relative overflow-hidden group hover:border-primary/50 transition-colors">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-4xl text-orange-500">storefront</span>
+                        </div>
+                        <p class="text-gray-400 text-xs font-medium uppercase tracking-wider mb-1">Đối thủ cạnh tranh
+                        </p>
+                        <h4 id="stat-competitors" class="text-white text-2xl font-mono font-bold mb-2">0</h4>
+                        <div class="flex items-center gap-1 text-xs font-medium text-red-400">
+                            <span class="material-symbols-outlined text-sm">warning</span>
+                            <span>Đang hoạt động trong khu vực</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Stores List -->
+                <div class="border-t border-border-dark pt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-white text-sm font-bold">Cửa hàng hoạt động tốt</h3>
+                        <span class="text-xs text-primary">Xem tất cả</span>
+                    </div>
+                    <div id="top-stores-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2"></div>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/data/stores.js"></script>
+    <script src="js/data/orders.js"></script>
+    <script src="js/data/cities.js"></script>
+    <script src="js/data/competitors.js"></script>
+    <script src="js/data/demographics.js"></script>
+    <script src="js/strategic-intelligence.js"></script>
+
+    <!-- Enterprise App Logic -->
+    <script>
+        // ===== ENTERPRISE APP =====
+        const EnterpriseApp = {
+            map: null,
+            heatLayer: null,
+            storeMarkers: L.layerGroup(),
+            competitorMarkers: L.layerGroup(),
+            coverageLayer: L.layerGroup(),
+            analysisLayer: L.layerGroup(),
+
+            init() {
+                this.initMap();
+                this.populateCityFilter();
+                this.bindEvents();
+                this.updateStats();
+                this.renderTopStores();
+
+                // Show stores by default
+                this.showStores();
+            },
+
+            initMap() {
+                this.map = L.map('map', {
+                    center: [-6.2088, 106.8456], // Jakarta
+                    zoom: 11,
+                    zoomControl: false
+                });
+
+                // Dark tiles
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© CARTO',
+                    maxZoom: 19
+                }).addTo(this.map);
+
+                // Add zoom control to right
+                L.control.zoom({ position: 'topright' }).addTo(this.map);
+
+                // Add layer groups
+                this.storeMarkers.addTo(this.map);
+                this.competitorMarkers.addTo(this.map);
+                this.coverageLayer.addTo(this.map);
+                this.analysisLayer.addTo(this.map);
+
+                // Map click event for area analysis
+                this.map.on('click', (e) => {
+                    if (document.getElementById('toggle-click-analyze').checked) {
+                        this.analyzeClickedArea(e.latlng.lat, e.latlng.lng);
+                    }
+                });
+            },
+
+            populateCityFilter() {
+                const select = document.getElementById('city-filter');
+                if (typeof CITIES_DATA !== 'undefined') {
+                    CITIES_DATA.forEach(city => {
+                        const opt = document.createElement('option');
+                        opt.value = city.name;
+                        opt.textContent = city.name;
+                        select.appendChild(opt);
+                    });
+                }
+            },
+
+            bindEvents() {
+                // Sliders
+                document.getElementById('coverage-radius').addEventListener('input', (e) => {
+                    document.getElementById('coverage-radius-value').textContent = e.target.value + ' km';
+                    if (document.getElementById('toggle-coverage').checked) {
+                        this.showCoverage();
+                    }
+                });
+
+                document.getElementById('heatmap-intensity').addEventListener('input', (e) => {
+                    document.getElementById('intensity-value').textContent = e.target.value;
+                    if (document.getElementById('toggle-heatmap').checked) {
+                        this.showHeatmap();
+                    }
+                });
+
+                // Analysis Radius slider
+                document.getElementById('analysis-radius').addEventListener('input', (e) => {
+                    document.getElementById('analysis-radius-value').textContent = e.target.value + ' km';
+                });
+
+                // Toggles
+                document.getElementById('toggle-competitors').addEventListener('change', (e) => {
+                    e.target.checked ? this.showCompetitors() : this.competitorMarkers.clearLayers();
+                });
+
+                document.getElementById('toggle-stores').addEventListener('change', (e) => {
+                    e.target.checked ? this.showStores() : this.storeMarkers.clearLayers();
+                });
+
+                document.getElementById('toggle-heatmap').addEventListener('change', (e) => {
+                    e.target.checked ? this.showHeatmap() : this.clearHeatmap();
+                });
+
+                document.getElementById('toggle-coverage').addEventListener('change', (e) => {
+                    e.target.checked ? this.showCoverage() : this.coverageLayer.clearLayers();
+                });
+
+                // BI Buttons
+                document.getElementById('btn-market-share').addEventListener('click', () => {
+                    const result = window.StrategicIntelligence.calculateMarketShare();
+                    this.showBIResult('Market Share', `
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-400">Erablue</span><span class="text-primary font-mono">${result.erablueShare}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Competitors</span><span class="text-orange-400 font-mono">${result.competitorShare}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Contested</span><span class="text-yellow-400 font-mono">${result.contestedShare}%</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Whitespace</span><span class="text-gray-500 font-mono">${result.uncoveredShare}%</span></div>
+                        </div>
+                    `);
+                });
+
+                document.getElementById('btn-threat-score').addEventListener('click', () => {
+                    this.showCompetitors();
+                    const threats = window.StrategicIntelligence.calculateCompetitorThreatScores();
+                    const top3 = threats.slice(0, 3);
+                    this.showBIResult('Threat Assessment', `
+                        <div class="space-y-2 text-sm">
+                            ${top3.map((t, i) => `
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-400">#${i + 1} ${t.competitor.name}</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-bold ${t.threatLevel === 'critical' ? 'bg-red-500/20 text-red-400' : t.threatLevel === 'high' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-400'}">${t.threatScore}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `);
+                });
+
+                document.getElementById('btn-strategic-analysis').addEventListener('click', () => {
+                    const radius = parseInt(document.getElementById('coverage-radius').value);
+                    this.showCompetitors();
+                    this.showGoldenZones(radius);
+                });
+
+                // Gap Analysis
+                document.getElementById('btn-gap-analysis').addEventListener('click', () => {
+                    const radius = parseInt(document.getElementById('coverage-radius').value);
+                    this.showGapAnalysis(radius);
+                });
+
+                // Expansion Priority
+                document.getElementById('btn-expansion-priority').addEventListener('click', () => {
+                    const priorities = window.StrategicIntelligence.calculateExpansionPriority();
+                    this.showExpansionPriority(priorities);
+                    const priorityA = priorities.filter(p => p.priority === 'A').length;
+                    this.showBIResult('Expansion Priority', `
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-400">Priority A</span><span class="text-green-400 font-mono font-bold">${priorityA}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Priority B</span><span class="text-blue-400 font-mono">${priorities.filter(p => p.priority === 'B').length}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Priority C</span><span class="text-gray-500 font-mono">${priorities.filter(p => p.priority === 'C').length}</span></div>
+                        </div>
+                    `);
+                });
+
+                // Revenue Zones
+                document.getElementById('btn-revenue-zones').addEventListener('click', () => {
+                    const zones = window.StrategicIntelligence.calculateRevenueOpportunities();
+                    this.showRevenueZones(zones);
+                    const topZone = zones[0];
+                    this.showBIResult('Revenue Zones', `
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-400">High-value zones</span><span class="text-amber-400 font-mono font-bold">${zones.length}</span></div>
+                            ${topZone ? `<div class="text-xs text-gray-500 mt-2">Top: ${topZone.orderCount} orders, avg Rp ${(topZone.avgOrderValue / 1000).toFixed(0)}K</div>` : ''}
+                        </div>
+                    `);
+                });
+
+                // Grid Analysis
+                document.getElementById('btn-grid-analysis').addEventListener('click', () => {
+                    const gridSize = parseInt(document.getElementById('grid-size').value);
+                    this.showGridAnalysis(gridSize);
+                });
+
+                // Grid size slider
+                document.getElementById('grid-size').addEventListener('input', (e) => {
+                    document.getElementById('grid-size-value').textContent = e.target.value + ' km';
+                });
+
+                // Competitor Density Heatmap
+                document.getElementById('btn-competitor-heatmap').addEventListener('click', () => {
+                    this.showCompetitorHeatmap();
+                });
+
+                // Brand Filter
+                document.getElementById('btn-apply-brand-filter').addEventListener('click', () => {
+                    const brands = [];
+                    if (document.getElementById('brand-blibli').checked) brands.push('blibli');
+                    if (document.getElementById('brand-electronicscity').checked) brands.push('electronicscity');
+                    this.filterCompetitorsByBrand(brands);
+                });
+
+                // City Filter
+                document.getElementById('city-filter').addEventListener('change', (e) => {
+                    const city = e.target.value;
+                    if (city) {
+                        const cityData = CITIES_DATA.find(c => c.name === city);
+                        if (cityData) {
+                            this.map.flyTo([cityData.lat, cityData.lng], 13, { duration: 1.5 });
+                        }
+                    } else {
+                        this.map.flyTo([-6.2088, 106.8456], 11, { duration: 1 });
+                    }
+                });
+
+                // Strategic Dashboard
+                document.getElementById('btn-strategic-dashboard').addEventListener('click', () => {
+                    this.showStrategicDashboard();
+                });
+
+                // Strategic Recommendations (AI)
+                document.getElementById('btn-strategic-recommendations').addEventListener('click', () => {
+                    this.showStrategicRecommendations();
+                });
+
+                // CAC Analysis
+                document.getElementById('btn-cac-analysis').addEventListener('click', () => {
+                    this.showCACAnalysis();
+                });
+
+                // Export buttons
+                document.getElementById('btn-full-report').addEventListener('click', () => {
+                    const report = window.StrategicIntelligence.exportFullReport();
+                    this.showToast('Full BI Report exported', 'success');
+                });
+
+                document.getElementById('btn-export-gap')?.addEventListener('click', () => {
+                    this.exportGapReport();
+                });
+
+                document.getElementById('btn-export-strategic')?.addEventListener('click', () => {
+                    this.exportStrategicReport();
+                });
+
+                document.getElementById('btn-clear-all').addEventListener('click', () => {
+                    this.clearAll();
+                });
+
+                document.getElementById('btn-export').addEventListener('click', () => {
+                    this.exportAllData();
+                });
+            },
+
+            // ===== NEW ANALYSIS METHODS =====
+
+            showGoldenZones(radiusKm) {
+                this.showLoading(true);
+                this.showCompetitors();
+
+                // Find zones near competitors but with low Erablue coverage
+                const goldenZones = [];
+                const competitorRadius = parseInt(document.getElementById('coverage-radius').value) || 3;
+
+                COMPETITORS_DATA.forEach(comp => {
+                    // Check if any Erablue store is within radius
+                    let nearestStoreDistance = Infinity;
+                    STORES_DATA.forEach(store => {
+                        const dist = this.calculateDistance(comp.latitude, comp.longitude, store.latitude, store.longitude);
+                        if (dist < nearestStoreDistance) nearestStoreDistance = dist;
+                    });
+
+                    // Count orders in area
+                    const ordersNearby = ORDERS_DATA.filter(o =>
+                        this.calculateDistance(comp.latitude, comp.longitude, o.customerLat, o.customerLng) <= 2
+                    ).length;
+
+                    // Golden zone: far from Erablue but has demand
+                    if (nearestStoreDistance > radiusKm && ordersNearby < 30) {
+                        goldenZones.push({
+                            lat: comp.latitude,
+                            lng: comp.longitude,
+                            competitor: comp,
+                            distance: nearestStoreDistance,
+                            orders: ordersNearby,
+                            score: (nearestStoreDistance * 10) + (30 - ordersNearby)
+                        });
+                    }
+                });
+
+                // Sort by score and render top zones
+                goldenZones.sort((a, b) => b.score - a.score);
+
+                goldenZones.slice(0, 10).forEach((zone, i) => {
+                    const circle = L.circle([zone.lat, zone.lng], {
+                        radius: 1500,
+                        color: '#fbbf24',
+                        fillColor: '#fbbf24',
+                        fillOpacity: 0.2,
+                        weight: 2
+                    }).addTo(this.map);
+
+                    circle.bindPopup(`
+                        <strong>Golden Zone #${i + 1}</strong><br>
+                        Near: ${zone.competitor.name}<br>
+                        Distance to Erablue: ${zone.distance.toFixed(1)} km<br>
+                        Orders nearby: ${zone.orders}
+                    `);
+                });
+
+                this.showLoading(false);
+                this.showToast(`Found ${goldenZones.length} golden zones`, 'success');
+
+                this.showBIResult('Golden Zones', `
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-400">Total zones</span><span class="text-yellow-400 font-mono font-bold">${goldenZones.length}</span></div>
+                        <div class="text-xs text-gray-500">Zones near competitors with low coverage</div>
+                    </div>
+                `);
+            },
+
+            showGapAnalysis(radiusKm) {
+                this.showLoading(true);
+                this.showCoverage();
+
+                // Simple gap visualization - areas with orders but far from stores
+                const gaps = [];
+                const gridSize = 0.02; // roughly 2km
+
+                // Create a grid and find cells with orders but no store
+                const bounds = this.map.getBounds();
+
+                for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += gridSize) {
+                    for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += gridSize) {
+                        const orderCount = ORDERS_DATA.filter(o =>
+                            Math.abs(o.customerLat - lat) < gridSize / 2 &&
+                            Math.abs(o.customerLng - lng) < gridSize / 2
+                        ).length;
+
+                        const nearestStore = Math.min(...STORES_DATA.map(s =>
+                            this.calculateDistance(lat, lng, s.latitude, s.longitude)
+                        ));
+
+                        if (orderCount > 5 && nearestStore > radiusKm) {
+                            gaps.push({ lat, lng, orderCount, distance: nearestStore });
+                        }
+                    }
+                }
+
+                gaps.sort((a, b) => b.orderCount - a.orderCount);
+
+                gaps.slice(0, 15).forEach((gap, i) => {
+                    L.circle([gap.lat, gap.lng], {
+                        radius: 800,
+                        color: '#22d3d1',
+                        fillColor: '#22d3d1',
+                        fillOpacity: 0.3,
+                        weight: 1
+                    }).addTo(this.coverageLayer).bindPopup(`Gap Zone: ${gap.orderCount} orders, ${gap.distance.toFixed(1)}km from store`);
+                });
+
+                this.showLoading(false);
+                this.showToast(`Identified ${gaps.length} coverage gaps`, 'info');
+
+                this.showBIResult('Gap Analysis', `
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-400">Gap zones</span><span class="text-cyan-400 font-mono font-bold">${gaps.length}</span></div>
+                        <div class="text-xs text-gray-500">Areas with demand but no coverage</div>
+                    </div>
+                `);
+            },
+
+            showExpansionPriority(priorities) {
+                this.showLoading(true);
+
+                const colors = { A: '#22c55e', B: '#3b82f6', C: '#6b7280' };
+
+                priorities.slice(0, 20).forEach(p => {
+                    L.circleMarker([p.center.lat, p.center.lng], {
+                        radius: p.priority === 'A' ? 12 : p.priority === 'B' ? 10 : 8,
+                        fillColor: colors[p.priority],
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    }).addTo(this.coverageLayer).bindPopup(`
+                        <strong>Priority ${p.priority}</strong><br>
+                        Score: ${p.score.toFixed(0)}<br>
+                        Orders: ${p.orderCount}
+                    `);
+                });
+
+                this.showLoading(false);
+                this.showToast(`Mapped ${priorities.length} expansion zones`, 'success');
+            },
+
+            showRevenueZones(zones) {
+                this.showLoading(true);
+
+                zones.slice(0, 15).forEach((zone, i) => {
+                    const intensity = Math.min(zone.avgOrderValue / 200000, 1);
+                    L.circle([zone.center.lat, zone.center.lng], {
+                        radius: 1000,
+                        color: '#f59e0b',
+                        fillColor: '#f59e0b',
+                        fillOpacity: 0.1 + (intensity * 0.4),
+                        weight: 2
+                    }).addTo(this.coverageLayer).bindPopup(`
+                        Revenue Zone #${i + 1}<br>
+                        Orders: ${zone.orderCount}<br>
+                        Avg Value: Rp ${(zone.avgOrderValue / 1000).toFixed(0)}K
+                    `);
+                });
+
+                this.showLoading(false);
+                this.showToast(`Identified ${zones.length} high-revenue zones`, 'success');
+            },
+
+            showGridAnalysis(cellSizeKm) {
+                this.showLoading(true);
+                this.coverageLayer.clearLayers();
+
+                const bounds = this.map.getBounds();
+                const cellSize = cellSizeKm * 0.009; // rough conversion
+
+                let cells = 0;
+                for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += cellSize) {
+                    for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += cellSize) {
+                        const orderCount = ORDERS_DATA.filter(o =>
+                            o.customerLat >= lat && o.customerLat < lat + cellSize &&
+                            o.customerLng >= lng && o.customerLng < lng + cellSize
+                        ).length;
+
+                        if (orderCount > 0) {
+                            const intensity = Math.min(orderCount / 50, 1);
+                            L.rectangle(
+                                [[lat, lng], [lat + cellSize, lng + cellSize]],
+                                {
+                                    color: '#8b5cf6',
+                                    fillColor: '#8b5cf6',
+                                    fillOpacity: 0.1 + (intensity * 0.5),
+                                    weight: 1
+                                }
+                            ).addTo(this.coverageLayer).bindPopup(`Orders: ${orderCount}`);
+                            cells++;
+                        }
+                    }
+                }
+
+                this.showLoading(false);
+                this.showToast(`Grid analysis: ${cells} active cells`, 'info');
+            },
+
+            showCompetitorHeatmap() {
+                this.clearHeatmap();
+
+                const heatData = COMPETITORS_DATA.map(comp => {
+                    const threat = COMPETITOR_BRANDS[comp.brand]?.threat || 'low';
+                    const weight = threat === 'high' ? 1.0 : threat === 'medium' ? 0.6 : 0.3;
+                    return [comp.latitude, comp.longitude, weight];
+                });
+
+                this.heatLayer = L.heatLayer(heatData, {
+                    radius: 40,
+                    blur: 30,
+                    maxZoom: 15,
+                    gradient: {
+                        0.0: 'rgba(46, 204, 113, 0.2)',
+                        0.4: 'rgba(241, 196, 15, 0.4)',
+                        0.7: 'rgba(231, 76, 60, 0.6)',
+                        1.0: 'rgba(192, 57, 43, 0.8)'
+                    }
+                }).addTo(this.map);
+
+                this.showToast('Competitor density heatmap active', 'warning');
+            },
+
+            filterCompetitorsByBrand(brands) {
+                this.competitorMarkers.clearLayers();
+
+                const filtered = COMPETITORS_DATA.filter(c => brands.includes(c.brand));
+
+                filtered.forEach(comp => {
+                    const brand = COMPETITOR_BRANDS[comp.brand];
+                    const marker = L.circleMarker([comp.latitude, comp.longitude], {
+                        radius: 6,
+                        fillColor: brand?.color || '#ef4444',
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+                    marker.bindPopup(`<strong>${comp.name}</strong><br>${brand?.name || comp.brand}`);
+                    this.competitorMarkers.addLayer(marker);
+                });
+
+                document.getElementById('toggle-competitors').checked = true;
+                this.showToast(`Showing ${filtered.length} competitors`, 'info');
+            },
+
+            // Utility methods
+            calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            },
+
+            showLoading(show) {
+                document.getElementById('loading-overlay').classList.toggle('hidden', !show);
+            },
+
+            exportGapReport() {
+                const report = { type: 'gap_analysis', timestamp: new Date().toISOString(), data: [] };
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'gap-report.json'; a.click();
+                this.showToast('Gap report exported', 'success');
+            },
+
+            exportStrategicReport() {
+                const report = { type: 'strategic_analysis', timestamp: new Date().toISOString() };
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'strategic-report.json'; a.click();
+                this.showToast('Strategic report exported', 'success');
+            },
+
+            exportAllData() {
+                const report = {
+                    exported: new Date().toISOString(),
+                    stores: STORES_DATA.length,
+                    orders: ORDERS_DATA.length,
+                    competitors: COMPETITORS_DATA.length
+                };
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = `erablue-export-${new Date().toISOString().split('T')[0]}.json`; a.click();
+                this.showToast('Data exported', 'success');
+            },
+
+            // ===== CLICK TO ANALYZE =====
+
+            async analyzeClickedArea(lat, lng) {
+                const radiusKm = parseFloat(document.getElementById('analysis-radius').value);
+                const radiusM = radiusKm * 1000;
+
+                // Clear previous analysis
+                this.analysisLayer.clearLayers();
+
+                // Draw analysis circle
+                const analysisCircle = L.circle([lat, lng], {
+                    radius: radiusM,
+                    color: '#06b6d4',
+                    fillColor: '#06b6d4',
+                    fillOpacity: 0.15,
+                    weight: 2,
+                    dashArray: '8, 4'
+                }).addTo(this.analysisLayer);
+
+                // Find orders in radius
+                const ordersInRadius = ORDERS_DATA.filter(o =>
+                    this.calculateDistance(lat, lng, o.customerLat, o.customerLng) <= radiusKm
+                );
+
+                // Calculate revenue
+                const totalRevenue = ordersInRadius.reduce((sum, o) => sum + o.orderValue, 0);
+                const avgOrderValue = ordersInRadius.length > 0 ? totalRevenue / ordersInRadius.length : 0;
+
+                // Find stores in radius
+                const storesInRadius = STORES_DATA.filter(s =>
+                    this.calculateDistance(lat, lng, s.latitude, s.longitude) <= radiusKm
+                );
+
+                // Find competitors in radius
+                const competitorsInRadius = COMPETITORS_DATA.filter(c =>
+                    this.calculateDistance(lat, lng, c.latitude, c.longitude) <= radiusKm
+                );
+
+                // Get demographic data from local database
+                const demographics = window.findDistrictByCoordinates ?
+                    window.findDistrictByCoordinates(lat, lng) : null;
+
+                // Fetch real population density from WorldPop API
+                let worldPopData = null;
+                try {
+                    worldPopData = await this.fetchWorldPopData(lat, lng);
+                } catch (e) {
+                    console.log('WorldPop API unavailable, using local data');
+                }
+
+                // Build demographic section HTML
+                let demographicHTML = '';
+                if (demographics) {
+                    const incomeClass = {
+                        'upper': { color: '#16a34a', label: 'Cao cấp' },
+                        'upper-middle': { color: '#22c55e', label: 'Trung- Cao' },
+                        'middle': { color: '#eab308', label: 'Trung bình' },
+                        'lower-middle': { color: '#f97316', label: 'Trung- Thấp' }
+                    };
+                    const incomeInfo = incomeClass[demographics.income_class] || { color: '#6b7280', label: 'N/A' };
+
+                    demographicHTML = `
+                        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                            <div style="font-size: 10px; color: #6b7280; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                                📊 Nhân khẩu học - ${demographics.district}, ${demographics.city}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                <div style="background: #eff6ff; padding: 6px; border-radius: 4px; text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; color: #1d4ed8;">${(demographics.population / 1000).toFixed(0)}K</div>
+                                    <div style="font-size: 8px; color: #3b82f6;">Dân số</div>
+                                </div>
+                                <div style="background: #f0fdf4; padding: 6px; border-radius: 4px; text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; color: #16a34a;">${demographics.density_per_km2.toLocaleString()}</div>
+                                    <div style="font-size: 8px; color: #22c55e;">Mật độ/km²</div>
+                                </div>
+                                <div style="background: #fef3c7; padding: 6px; border-radius: 4px; text-align: center;">
+                                    <div style="font-size: 12px; font-weight: 700; color: #d97706;">Rp ${(demographics.avg_income_idr / 1000000).toFixed(1)}M</div>
+                                    <div style="font-size: 8px; color: #f59e0b;">Thu nhập TB/tháng</div>
+                                </div>
+                                <div style="background: ${incomeInfo.color}15; padding: 6px; border-radius: 4px; text-align: center; border: 1px solid ${incomeInfo.color}40;">
+                                    <div style="font-size: 12px; font-weight: 700; color: ${incomeInfo.color};">${incomeInfo.label}</div>
+                                    <div style="font-size: 8px; color: #6b7280;">Thu nhập</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Economic Indicators -->
+                            <div style="margin-top: 8px; padding: 8px; background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span style="font-size: 9px; color: #94a3b8;">Chỉ số kinh tế</span>
+                                    <span style="font-size: 10px; font-weight: 700; color: ${demographics.economic_index >= 75 ? '#22c55e' : demographics.economic_index >= 60 ? '#eab308' : '#f97316'};">${demographics.economic_index}/100</span>
+                                </div>
+                                <div style="background: #374151; height: 4px; border-radius: 2px; overflow: hidden;">
+                                    <div style="width: ${demographics.economic_index}%; height: 100%; background: linear-gradient(90deg, #3b82f6, #22c55e); border-radius: 2px;"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 10px; font-weight: 600; color: white;">${demographics.households.toLocaleString()}</div>
+                                        <div style="font-size: 7px; color: #64748b;">Hộ gia đình</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 10px; font-weight: 600; color: white;">${demographics.education.university}%</div>
+                                        <div style="font-size: 7px; color: #64748b;">Đại học</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 10px; font-weight: 600; color: ${demographics.retail_potential === 'premium' ? '#a855f7' : demographics.retail_potential === 'high' ? '#22c55e' : '#eab308'};">${demographics.retail_potential.toUpperCase()}</div>
+                                        <div style="font-size: 7px; color: #64748b;">Tiềm năng bán lẻ</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    demographicHTML = `
+                        <div style="margin-top: 12px; padding: 10px; background: #f3f4f6; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 11px; color: #6b7280;">📊 Không có dữ liệu nhân khẩu học cho khu vực này</div>
+                        </div>
+                    `;
+                }
+
+                // WorldPop real-time data
+                let worldPopHTML = '';
+                if (worldPopData && worldPopData.population_density) {
+                    worldPopHTML = `
+                        <div style="margin-top: 8px; padding: 8px; background: #faf5ff; border-radius: 6px; border: 1px solid #e9d5ff;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <span style="font-size: 12px;">🌍</span>
+                                <span style="font-size: 9px; color: #7c3aed; font-weight: 600;">Dữ liệu WorldPop thực</span>
+                            </div>
+                            <div style="font-size: 14px; font-weight: 700; color: #6d28d9;">${worldPopData.population_density.toLocaleString()} người/km²</div>
+                        </div>
+                    `;
+                }
+
+                // Create popup content
+                const popupContent = `
+                    <div style="min-width: 280px; font-family: Inter, sans-serif;">
+                        <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 12px; margin: -10px -10px 12px -10px; border-radius: 4px 4px 0 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; color: white;">
+                                <span style="font-size: 20px;">📍</span>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 14px;">Phân tích khu vực</div>
+                                    <div style="font-size: 11px; opacity: 0.9;">Radius: ${radiusKm} km | ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                            <div style="background: #f0fdfa; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #99f6e4;">
+                                <div style="font-size: 18px; font-weight: 700; color: #0d9488;">${ordersInRadius.length.toLocaleString('id-ID')}</div>
+                                <div style="font-size: 9px; color: #0f766e; text-transform: uppercase; font-weight: 600;">Đơn hàng</div>
+                            </div>
+                            <div style="background: #ecfeff; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #a5f3fc;">
+                                <div style="font-size: 16px; font-weight: 700; color: #0891b2;">Rp ${(totalRevenue / 1000000).toFixed(0)}M</div>
+                                <div style="font-size: 9px; color: #0e7490; text-transform: uppercase; font-weight: 600;">Doanh thu</div>
+                            </div>
+                            <div style="background: #f0fdf4; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #bbf7d0;">
+                                <div style="font-size: 14px; font-weight: 700; color: #16a34a;">Rp ${(avgOrderValue / 1000).toFixed(0)}K</div>
+                                <div style="font-size: 9px; color: #15803d; text-transform: uppercase; font-weight: 600;">TB/Đơn</div>
+                            </div>
+                            <div style="background: #fef3c7; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #fde68a;">
+                                <div style="font-size: 14px; font-weight: 700; color: #d97706;">${storesInRadius.length}</div>
+                                <div style="font-size: 9px; color: #b45309; text-transform: uppercase; font-weight: 600;">Stores</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                            <div style="flex: 1; background: ${competitorsInRadius.length > 2 ? '#fef2f2' : '#f0fdf4'}; padding: 8px; border-radius: 6px; text-align: center; border: 1px solid ${competitorsInRadius.length > 2 ? '#fecaca' : '#bbf7d0'};">
+                                <div style="font-size: 16px; font-weight: 700; color: ${competitorsInRadius.length > 2 ? '#dc2626' : '#16a34a'};">${competitorsInRadius.length}</div>
+                                <div style="font-size: 9px; color: #6b7280; text-transform: uppercase;">Competitors</div>
+                            </div>
+                            <div style="flex: 1; background: #f3f4f6; padding: 8px; border-radius: 6px; text-align: center; border: 1px solid #e5e7eb;">
+                                <div style="font-size: 14px; font-weight: 700; color: #374151;">${((ordersInRadius.length / (Math.PI * radiusKm * radiusKm)) || 0).toFixed(1)}</div>
+                                <div style="font-size: 9px; color: #6b7280; text-transform: uppercase;">Orders/km²</div>
+                            </div>
+                        </div>
+                        
+                        ${demographicHTML}
+                        ${worldPopHTML}
+                        
+                        ${storesInRadius.length === 0 ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #fef3c7; border-radius: 6px; border: 1px solid #fde68a;">
+                                <div style="font-size: 11px; color: #92400e;">⚠️ No Erablue stores - expansion opportunity!</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                analysisCircle.bindPopup(popupContent, { maxWidth: 350 }).openPopup();
+
+                // Also show in BI result panel with demographics
+                let demographicSummary = '';
+                if (demographics) {
+                    demographicSummary = `
+                        <div class="border-t border-border-dark/50 pt-2 mt-2">
+                            <div class="text-[10px] text-gray-500 uppercase mb-1">Demographics</div>
+                            <div class="flex justify-between"><span class="text-gray-400">District</span><span class="text-purple-400 font-mono">${demographics.district}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Population</span><span class="text-blue-400 font-mono">${(demographics.population / 1000).toFixed(0)}K</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Avg Income</span><span class="text-amber-400 font-mono">Rp ${(demographics.avg_income_idr / 1000000).toFixed(1)}M</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Economic Index</span><span class="text-green-400 font-mono">${demographics.economic_index}/100</span></div>
+                        </div>
+                    `;
+                }
+
+                this.showBIResult(`Area: ${radiusKm}km radius`, `
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-400">Orders</span><span class="text-cyan-400 font-mono font-bold">${ordersInRadius.length}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Revenue</span><span class="text-primary font-mono">Rp ${(totalRevenue / 1000000).toFixed(0)}M</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Avg Value</span><span class="text-green-400 font-mono">Rp ${(avgOrderValue / 1000).toFixed(0)}K</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Stores</span><span class="text-amber-400 font-mono">${storesInRadius.length}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Competitors</span><span class="text-red-400 font-mono">${competitorsInRadius.length}</span></div>
+                        ${demographicSummary}
+                    </div>
+                `);
+
+                this.showToast(`Analyzed: ${ordersInRadius.length} orders, Rp ${(totalRevenue / 1000000).toFixed(0)}M${demographics ? ' | ' + demographics.district : ''}`, 'info');
+            },
+
+            // Fetch population density from WorldPop API
+            async fetchWorldPopData(lat, lng) {
+                try {
+                    // WorldPop API endpoint for Indonesia population density
+                    const url = `https://api.worldpop.org/v1/wopr/pointpop?geojson={"type":"Point","coordinates":[${lng},${lat}]}&year=2020&country=IDN&format=json`;
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        signal: AbortSignal.timeout(3000) // 3 second timeout
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return {
+                            population_density: data.data?.pop_density || null,
+                            population: data.data?.pop || null
+                        };
+                    }
+                } catch (e) {
+                    // API unavailable or timeout - silently fail
+                    console.log('WorldPop API not available');
+                }
+                return null;
+            },
+
+            // ===== STRATEGIC INSIGHTS METHODS =====
+
+            showStrategicDashboard() {
+                this.showLoading(true);
+
+                try {
+                    const dashboard = window.StrategicIntelligence.getStrategicDashboard();
+
+                    const html = `
+                        <div class="space-y-4">
+                            <!-- Overview -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-deep-space p-3 rounded-lg border border-border-dark">
+                                    <div class="text-xl font-bold text-white font-mono">${dashboard.overview.storeCount}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase">Stores</div>
+                                </div>
+                                <div class="bg-deep-space p-3 rounded-lg border border-border-dark">
+                                    <div class="text-xl font-bold text-white font-mono">${dashboard.overview.orderCount.toLocaleString('id-ID')}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase">Orders</div>
+                                </div>
+                                <div class="bg-deep-space p-3 rounded-lg border border-border-dark col-span-2">
+                                    <div class="text-lg font-bold text-primary font-mono">${dashboard.overview.totalRevenue}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase">Total Revenue</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Market Position -->
+                            <div class="border-t border-border-dark pt-3">
+                                <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Market Position</div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-300">Erablue Share</span>
+                                        <span class="text-sm font-bold text-primary">${dashboard.marketPosition.erablueShare}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-300">Competitor Share</span>
+                                        <span class="text-sm font-bold text-orange-400">${dashboard.marketPosition.competitorShare}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-300">Contested</span>
+                                        <span class="text-sm font-bold text-yellow-400">${dashboard.marketPosition.contested}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-300">Whitespace</span>
+                                        <span class="text-sm font-bold text-gray-500">${dashboard.marketPosition.whitespace}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Competitor Analysis -->
+                            <div class="border-t border-border-dark pt-3">
+                                <div class="text-xs font-semibold text-gray-400 uppercase mb-2">Competitor Threats</div>
+                                <div class="flex gap-3">
+                                    <div class="flex-1 bg-red-500/10 rounded-lg p-2 text-center border border-red-500/30">
+                                        <div class="text-lg font-bold text-red-400">${dashboard.competitorAnalysis.criticalThreats}</div>
+                                        <div class="text-[9px] text-red-400/70 uppercase">Critical</div>
+                                    </div>
+                                    <div class="flex-1 bg-orange-500/10 rounded-lg p-2 text-center border border-orange-500/30">
+                                        <div class="text-lg font-bold text-orange-400">${dashboard.competitorAnalysis.highThreats}</div>
+                                        <div class="text-[9px] text-orange-400/70 uppercase">High</div>
+                                    </div>
+                                    <div class="flex-1 bg-gray-500/10 rounded-lg p-2 text-center border border-gray-500/30">
+                                        <div class="text-lg font-bold text-gray-400">${dashboard.competitorAnalysis.totalCompetitors}</div>
+                                        <div class="text-[9px] text-gray-400/70 uppercase">Total</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    this.showBIResult('Strategic Dashboard', html);
+                    this.showToast('Strategic dashboard loaded', 'success');
+                } catch (e) {
+                    this.showToast('Error loading dashboard', 'error');
+                }
+
+                this.showLoading(false);
+            },
+
+            showStrategicRecommendations() {
+                this.showLoading(true);
+
+                try {
+                    const dashboard = window.StrategicIntelligence.getStrategicDashboard();
+                    const recommendations = dashboard.recommendations;
+
+                    const panel = document.getElementById('recommendations-panel');
+                    const list = document.getElementById('recommendations-list');
+
+                    const priorityColors = {
+                        'URGENT': 'bg-red-500/20 border-red-500/50 text-red-400',
+                        'CRITICAL': 'bg-red-500/20 border-red-500/50 text-red-400',
+                        'HIGH': 'bg-orange-500/20 border-orange-500/50 text-orange-400',
+                        'MEDIUM': 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400',
+                        'LOW': 'bg-green-500/20 border-green-500/50 text-green-400'
+                    };
+
+                    const priorityIcons = {
+                        'URGENT': 'warning',
+                        'CRITICAL': 'error',
+                        'HIGH': 'priority_high',
+                        'MEDIUM': 'info',
+                        'LOW': 'check_circle'
+                    };
+
+                    if (recommendations.length === 0) {
+                        list.innerHTML = `
+                            <div class="text-center py-6">
+                                <span class="material-symbols-outlined text-4xl text-green-400 mb-2">check_circle</span>
+                                <p class="text-gray-400 text-sm">No critical recommendations at this time.</p>
+                                <p class="text-gray-500 text-xs mt-1">Your market position looks strong!</p>
+                            </div>
+                        `;
+                    } else {
+                        list.innerHTML = recommendations.map(rec => `
+                            <div class="p-3 rounded-lg border ${priorityColors[rec.priority] || priorityColors['MEDIUM']}">
+                                <div class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined ${priorityColors[rec.priority]?.split(' ')[2] || 'text-yellow-400'}">${priorityIcons[rec.priority] || 'info'}</span>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-[10px] font-bold uppercase ${priorityColors[rec.priority]?.split(' ')[2] || 'text-yellow-400'}">${rec.priority}</span>
+                                            <span class="text-[10px] text-gray-500">• ${rec.category}</span>
+                                        </div>
+                                        <p class="text-sm text-white leading-snug">${rec.action}</p>
+                                        ${rec.metric ? `<p class="text-xs text-gray-400 mt-1 font-mono">${rec.metric}</p>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+
+                    panel.classList.remove('hidden');
+                    this.showToast(`${recommendations.length} recommendations generated`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    this.showToast('Error generating recommendations', 'error');
+                }
+
+                this.showLoading(false);
+            },
+
+            showCACAnalysis() {
+                this.showLoading(true);
+
+                try {
+                    const cacZones = window.StrategicIntelligence.calculateCACZones();
+
+                    // Visualize CAC zones on map
+                    this.coverageLayer.clearLayers();
+
+                    const efficiencyColors = {
+                        'high': '#22c55e',
+                        'medium': '#f59e0b',
+                        'low': '#ef4444'
+                    };
+
+                    cacZones.slice(0, 30).forEach(zone => {
+                        L.circle([zone.lat, zone.lng], {
+                            radius: 800,
+                            color: efficiencyColors[zone.efficiency],
+                            fillColor: efficiencyColors[zone.efficiency],
+                            fillOpacity: 0.2,
+                            weight: 1
+                        }).addTo(this.coverageLayer).bindPopup(`
+                            <strong>CAC Zone</strong><br>
+                            Efficiency: <span style="color: ${efficiencyColors[zone.efficiency]}; font-weight: bold;">${zone.efficiency.toUpperCase()}</span><br>
+                            Estimated CAC: ${zone.estimatedCAC}<br>
+                            Existing customers: ${zone.existingCustomers}<br>
+                            Competitor factor: ${zone.competitorFactor}x
+                        `);
+                    });
+
+                    // Summary stats
+                    const highEfficiency = cacZones.filter(z => z.efficiency === 'high').length;
+                    const mediumEfficiency = cacZones.filter(z => z.efficiency === 'medium').length;
+                    const lowEfficiency = cacZones.filter(z => z.efficiency === 'low').length;
+
+                    this.showBIResult('CAC Analysis', `
+                        <div class="space-y-3">
+                            <div class="flex gap-2">
+                                <div class="flex-1 bg-green-500/10 p-2 rounded text-center">
+                                    <div class="text-lg font-bold text-green-400">${highEfficiency}</div>
+                                    <div class="text-[9px] text-green-400/70 uppercase">High ROI</div>
+                                </div>
+                                <div class="flex-1 bg-amber-500/10 p-2 rounded text-center">
+                                    <div class="text-lg font-bold text-amber-400">${mediumEfficiency}</div>
+                                    <div class="text-[9px] text-amber-400/70 uppercase">Medium</div>
+                                </div>
+                                <div class="flex-1 bg-red-500/10 p-2 rounded text-center">
+                                    <div class="text-lg font-bold text-red-400">${lowEfficiency}</div>
+                                    <div class="text-[9px] text-red-400/70 uppercase">Low ROI</div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500">🟢 High = Low CAC, invest more | 🔴 Low = High CAC, reconsider</p>
+                        </div>
+                    `);
+
+                    this.showToast(`CAC analysis: ${cacZones.length} zones evaluated`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    this.showToast('Error calculating CAC zones', 'error');
+                }
+
+                this.showLoading(false);
+            },
+
+            showStores() {
+                this.storeMarkers.clearLayers();
+
+                // Calculate store statistics
+                const storeStats = {};
+                STORES_DATA.forEach(store => {
+                    const orders = ORDERS_DATA.filter(o => o.storeId === store.id);
+                    storeStats[store.id] = {
+                        totalOrders: orders.length,
+                        totalRevenue: orders.reduce((sum, o) => sum + o.orderValue, 0),
+                        avgOrderValue: orders.length > 0 ? Math.round(orders.reduce((sum, o) => sum + o.orderValue, 0) / orders.length) : 0,
+                        avgDistance: orders.length > 0 ? (orders.reduce((sum, o) => sum + o.distance, 0) / orders.length).toFixed(1) : 0
+                    };
+                });
+
+                STORES_DATA.forEach(store => {
+                    const stats = storeStats[store.id];
+                    const marker = L.circleMarker([store.latitude, store.longitude], {
+                        radius: 10,
+                        fillColor: '#1e70eb',
+                        color: '#fff',
+                        weight: 3,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+
+                    // Create detailed popup
+                    const popupContent = `
+                        <div style="min-width: 220px; font-family: Inter, sans-serif;">
+                            <div style="border-bottom: 2px solid #1e70eb; padding-bottom: 8px; margin-bottom: 10px;">
+                                <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e70eb;">${store.name}</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; color: #6b7280;">${store.address || store.city || 'Jakarta'}</p>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #111827;">${stats.totalOrders.toLocaleString('id-ID')}</div>
+                                    <div style="font-size: 10px; color: #6b7280; text-transform: uppercase;">Đơn hàng</div>
+                                </div>
+                                <div style="text-align: center; padding: 8px; background: #dbeafe; border-radius: 6px;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #1e70eb;">Rp ${(stats.totalRevenue / 1000000).toFixed(0)}M</div>
+                                    <div style="font-size: 10px; color: #3b82f6; text-transform: uppercase;">Doanh thu</div>
+                                </div>
+                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #111827;">Rp ${(stats.avgOrderValue / 1000).toFixed(0)}K</div>
+                                    <div style="font-size: 10px; color: #6b7280; text-transform: uppercase;">TB/Đơn</div>
+                                </div>
+                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                                    <div style="font-size: 14px; font-weight: 600; color: #111827;">${stats.avgDistance} km</div>
+                                    <div style="font-size: 10px; color: #6b7280; text-transform: uppercase;">KC TB</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; display: flex; gap: 6px;">
+                                <button onclick="EnterpriseApp.focusStore('${store.id}')" style="flex: 1; padding: 6px; background: #1e70eb; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">🔥 Heatmap</button>
+                                <button onclick="EnterpriseApp.showStoreAnalysis('${store.id}')" style="flex: 1; padding: 6px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11px; cursor: pointer;">📊 Phân tích</button>
+                            </div>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent, { maxWidth: 280 });
+                    this.storeMarkers.addLayer(marker);
+                });
+            },
+
+            focusStore(storeId) {
+                const store = STORES_DATA.find(s => s.id === storeId);
+                if (!store) return;
+
+                this.map.flyTo([store.latitude, store.longitude], 14, { duration: 1 });
+
+                // Show store-specific heatmap
+                this.clearHeatmap();
+                const storeOrders = ORDERS_DATA.filter(o => o.storeId === storeId);
+                const heatData = storeOrders.map(o => [o.customerLat, o.customerLng, 1]);
+
+                this.heatLayer = L.heatLayer(heatData, {
+                    radius: 25,
+                    blur: 15,
+                    maxZoom: 17,
+                    gradient: { 0.2: '#3b82f6', 0.4: '#8b5cf6', 0.6: '#f97316', 0.8: '#ef4444', 1.0: '#fbbf24' }
+                }).addTo(this.map);
+
+                this.showToast(`Showing heatmap for ${store.name}`, 'info');
+            },
+
+            showStoreAnalysis(storeId) {
+                const store = STORES_DATA.find(s => s.id === storeId);
+                if (!store) return;
+
+                const orders = ORDERS_DATA.filter(o => o.storeId === storeId);
+                const revenue = orders.reduce((sum, o) => sum + o.orderValue, 0);
+                const avgValue = orders.length > 0 ? revenue / orders.length : 0;
+
+                this.showBIResult(`Store: ${store.name}`, `
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-400">Orders</span><span class="text-white font-mono">${orders.length}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Revenue</span><span class="text-primary font-mono">Rp ${(revenue / 1000000).toFixed(0)}M</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Avg Value</span><span class="text-green-400 font-mono">Rp ${(avgValue / 1000).toFixed(0)}K</span></div>
+                    </div>
+                `);
+            },
+
+            showCompetitors() {
+                this.competitorMarkers.clearLayers();
+                if (typeof COMPETITORS_DATA === 'undefined') return;
+
+                COMPETITORS_DATA.forEach(comp => {
+                    const marker = L.circleMarker([comp.latitude, comp.longitude], {
+                        radius: 6,
+                        fillColor: '#ef4444',
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+                    const brandName = COMPETITOR_BRANDS[comp.brand]?.name || comp.brand;
+                    marker.bindPopup(`<strong>${comp.name}</strong><br>${brandName}`);
+                    this.competitorMarkers.addLayer(marker);
+                });
+
+                document.getElementById('toggle-competitors').checked = true;
+            },
+
+            showHeatmap() {
+                this.clearHeatmap();
+                const intensity = parseInt(document.getElementById('heatmap-intensity').value);
+
+                const heatData = ORDERS_DATA.map(o => [o.customerLat, o.customerLng, 1]);
+                this.heatLayer = L.heatLayer(heatData, {
+                    radius: intensity,
+                    blur: 15,
+                    maxZoom: 17,
+                    gradient: { 0.2: '#3b82f6', 0.4: '#8b5cf6', 0.6: '#f97316', 0.8: '#ef4444', 1.0: '#fbbf24' }
+                }).addTo(this.map);
+            },
+
+            clearHeatmap() {
+                if (this.heatLayer) {
+                    this.map.removeLayer(this.heatLayer);
+                    this.heatLayer = null;
+                }
+            },
+
+            showCoverage() {
+                this.coverageLayer.clearLayers();
+                const radius = parseInt(document.getElementById('coverage-radius').value) * 1000;
+
+                STORES_DATA.forEach(store => {
+                    const circle = L.circle([store.latitude, store.longitude], {
+                        radius: radius,
+                        color: '#1e70eb',
+                        fillColor: '#1e70eb',
+                        fillOpacity: 0.1,
+                        weight: 1,
+                        dashArray: '5, 5'
+                    });
+                    this.coverageLayer.addLayer(circle);
+                });
+            },
+
+            clearAll() {
+                this.storeMarkers.clearLayers();
+                this.competitorMarkers.clearLayers();
+                this.coverageLayer.clearLayers();
+                this.clearHeatmap();
+
+                document.getElementById('toggle-competitors').checked = false;
+                document.getElementById('toggle-stores').checked = false;
+                document.getElementById('toggle-heatmap').checked = false;
+                document.getElementById('toggle-coverage').checked = false;
+
+                document.getElementById('bi-result').classList.add('hidden');
+            },
+
+            updateStats() {
+                const totalOrders = ORDERS_DATA.length;
+                const totalRevenue = ORDERS_DATA.reduce((sum, o) => sum + o.orderValue, 0);
+                const competitorCount = typeof COMPETITORS_DATA !== 'undefined' ? COMPETITORS_DATA.length : 0;
+
+                document.getElementById('stat-orders').textContent = totalOrders.toLocaleString('id-ID');
+                document.getElementById('stat-revenue').textContent = 'Rp ' + (totalRevenue / 1000000000).toFixed(1) + 'B';
+                document.getElementById('stat-competitors').textContent = competitorCount;
+            },
+
+            renderTopStores() {
+                const container = document.getElementById('top-stores-list');
+
+                // Calculate revenue per store
+                const storeRevenue = {};
+                ORDERS_DATA.forEach(o => {
+                    storeRevenue[o.storeId] = (storeRevenue[o.storeId] || 0) + o.orderValue;
+                });
+
+                const sorted = STORES_DATA
+                    .map(s => ({ ...s, revenue: storeRevenue[s.id] || 0 }))
+                    .sort((a, b) => b.revenue - a.revenue)
+                    .slice(0, 4);
+
+                const maxRev = sorted[0]?.revenue || 1;
+
+                container.innerHTML = sorted.map((store, i) => `
+                    <div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-dark transition-colors cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="text-gray-500 text-xs font-mono font-bold">${String(i + 1).padStart(2, '0')}</div>
+                            <div>
+                                <p class="text-sm font-medium text-white">${store.name}</p>
+                                <p class="text-xs text-gray-400">${store.city || 'Jakarta'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-mono font-bold text-white">Rp ${(store.revenue / 1000000).toFixed(0)}M</p>
+                            <div class="w-16 h-1 bg-border-dark rounded-full mt-1 ml-auto">
+                                <div class="h-full bg-primary rounded-full" style="width: ${(store.revenue / maxRev * 100).toFixed(0)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            showBIResult(title, html) {
+                const container = document.getElementById('bi-result');
+                const content = document.getElementById('bi-result-content');
+                content.innerHTML = `<h4 class="text-xs font-semibold text-gray-400 uppercase mb-3">${title}</h4>${html}`;
+                container.classList.remove('hidden');
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const colors = {
+                    success: 'border-green-500',
+                    error: 'border-red-500',
+                    info: 'border-primary',
+                    warning: 'border-yellow-500'
+                };
+
+                const toast = document.createElement('div');
+                toast.className = `bg-surface-dark border ${colors[type]} border-l-4 px-4 py-3 rounded-lg shadow-lg text-sm text-white animate-pulse`;
+                toast.textContent = message;
+                container.appendChild(toast);
+
+                setTimeout(() => toast.remove(), 3000);
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => EnterpriseApp.init());
+    </script>
+</body>
+
+</html>

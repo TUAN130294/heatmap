@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Erablue Heatmap - Hệ thống bản đồ phân tích phân bố khách hàng siêu thị">
+    <title>🗺️ Erablue Heatmap - Phân tích vùng phủ sóng</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/map.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/reports.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
+    <!-- Mobile viewport -->
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">🏪</span>
+                    <span class="logo-text">Erablue <span class="highlight">Heatmap</span></span>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="view-toggle">
+                    <button id="btn-single-view" class="toggle-btn active" title="Xem từng siêu thị">
+                        <span>📍</span> Đơn lẻ
+                    </button>
+                    <button id="btn-multi-view" class="toggle-btn" title="Xem nhiều siêu thị">
+                        <span>🔥</span> Tổng hợp
+                    </button>
+                    <button id="btn-gap-view" class="toggle-btn" title="Phân tích vùng trống">
+                        <span>🎯</span> Gap Analysis
+                    </button>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="btn-export" class="header-btn" title="Xuất báo cáo">
+                    <span>📊</span>
+                </button>
+                <button id="btn-fullscreen" class="header-btn" title="Toàn màn hình">
+                    <span>⛶</span>
+                </button>
+                <button id="btn-settings" class="header-btn" title="Cài đặt">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Control Panel (Left Sidebar) -->
+            <aside id="control-panel" class="control-panel glass-panel">
+                <div class="panel-header">
+                    <h2>🎛️ Bộ lọc</h2>
+                    <button id="btn-reset-filters" class="btn-icon" title="Reset bộ lọc">
+                        <span>↻</span>
+                    </button>
+                </div>
+
+                <div class="panel-content">
+                    <!-- City Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <span class="label-icon">🏙️</span>
+                            Thành phố
+                        </label>
+                        <select id="city-filter" class="select-modern">
+                            <option value="">-- Tất cả thành phố --</option>
+                        </select>
+                    </div>
+
+                    <!-- District Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <span class="label-icon">📍</span>
+                            Quận / Huyện
+                        </label>
+                        <div id="district-filter" class="checkbox-group">
+                            <p class="placeholder-text">Chọn thành phố trước</p>
+                        </div>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <span class="label-icon">📅</span>
+                            Khoảng thời gian
+                        </label>
+                        <div class="date-range">
+                            <input type="date" id="date-from" class="input-modern">
+                            <span class="date-separator">→</span>
+                            <input type="date" id="date-to" class="input-modern">
+                        </div>
+                        <div class="quick-dates">
+                            <button class="quick-date-btn" data-range="7">7 ngày</button>
+                            <button class="quick-date-btn" data-range="30">30 ngày</button>
+                            <button class="quick-date-btn" data-range="90">90 ngày</button>
+                            <button class="quick-date-btn active" data-range="all">Tất cả</button>
+                        </div>
+                    </div>
+
+                    <!-- Heatmap Settings -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <span class="label-icon">🔥</span>
+                            Cài đặt Heatmap
+                        </label>
+                        <div class="slider-group">
+                            <div class="slider-row">
+                                <span class="slider-label">Cường độ</span>
+                                <input type="range" id="intensity-slider" min="10" max="50" value="25"
+                                    class="slider-modern">
+                                <span id="intensity-value" class="slider-value">25</span>
+                            </div>
+                            <div class="slider-row">
+                                <span class="slider-label">Bán kính</span>
+                                <input type="range" id="radius-slider" min="5" max="40" value="20"
+                                    class="slider-modern">
+                                <span id="radius-value" class="slider-value">20</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Store Selection -->
+                    <div class="filter-group store-filter-group">
+                        <label class="filter-label">
+                            <span class="label-icon">🏪</span>
+                            Siêu thị
+                            <span id="store-count" class="badge">0</span>
+                        </label>
+                        <div class="store-actions">
+                            <button id="btn-select-all" class="btn-small">Chọn tất cả</button>
+                            <button id="btn-deselect-all" class="btn-small">Bỏ chọn</button>
+                        </div>
+                        <div id="store-list" class="store-list">
+                            <!-- Store checkboxes will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gap Analysis Section -->
+                <div class="filter-group gap-analysis-group">
+                    <label class="filter-label">
+                        <span class="label-icon">🎯</span>
+                        Phân tích vùng trống
+                    </label>
+                    <div class="slider-row">
+                        <span class="slider-label">Bán kính (km)</span>
+                        <input type="range" id="coverage-radius" min="2" max="10" value="5" class="slider-modern">
+                        <span id="coverage-radius-value" class="slider-value">5</span>
+                    </div>
+                    <div class="gap-actions">
+                        <button id="btn-show-coverage" class="btn-small btn-coverage">
+                            ⭕ Hiện bán kính
+                        </button>
+                        <button id="btn-show-gaps" class="btn-small btn-gaps">
+                            🎯 Tìm vùng trống
+                        </button>
+                    </div>
+                    <div class="gap-actions">
+                        <button id="btn-show-grid" class="btn-small">
+                            📊 Hiện lưới
+                        </button>
+                        <button id="btn-export-gaps" class="btn-small">
+                            📥 Xuất báo cáo
+                        </button>
+                    </div>
+                    <div id="gap-report" class="gap-report hidden"></div>
+                </div>
+
+                <!-- Competitor Analysis Section -->
+                <div class="filter-group competitor-analysis-group">
+                    <label class="filter-label">
+                        <span class="label-icon">⚔️</span>
+                        Phân tích đối thủ
+                        <span id="competitor-count" class="badge competitor-badge">0</span>
+                    </label>
+                    <div class="competitor-brands-filter">
+                        <label class="brand-checkbox">
+                            <input type="checkbox" id="brand-blibli" value="blibli" checked>
+                            <span class="brand-icon" style="background: #0066CC;">💙</span>
+                            <span>Blibli Electronics</span>
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox" id="brand-electronicscity" value="electronicscity" checked>
+                            <span class="brand-icon" style="background: #FF6B00;">🧡</span>
+                            <span>Electronics City</span>
+                        </label>
+                    </div>
+                    <div class="gap-actions">
+                        <button id="btn-show-competitors" class="btn-small btn-competitor">
+                            ⚔️ Hiện đối thủ
+                        </button>
+                        <button id="btn-competitor-heat" class="btn-small">
+                            🔥 Mật độ cạnh tranh
+                        </button>
+                    </div>
+                    <div class="competitor-sync-status">
+                        <span class="sync-icon">🔄</span>
+                        <span id="competitor-sync-time">Cập nhật: --</span>
+                    </div>
+                </div>
+
+                <!-- Strategic Business Intelligence Section -->
+                <div class="filter-group strategic-analysis-group">
+                    <label class="filter-label">
+                        <span class="label-icon">📊</span>
+                        Business Intelligence
+                        <span class="badge golden-badge">PRO</span>
+                    </label>
+                    <p class="section-desc">Strategic analysis for marketing & expansion decisions</p>
+
+                    <!-- Analysis Type Selector -->
+                    <div class="analysis-type-selector">
+                        <button id="btn-market-share" class="btn-small" title="Market Share Analysis">
+                            📈 Market Share
+                        </button>
+                        <button id="btn-threat-score" class="btn-small" title="Competitor Threat Score">
+                            ⚠️ Threat Score
+                        </button>
+                    </div>
+
+                    <div class="gap-actions">
+                        <button id="btn-expansion-priority" class="btn-small" title="Expansion Priority Matrix">
+                            🎯 Expansion Map
+                        </button>
+                        <button id="btn-revenue-zones" class="btn-small" title="Revenue Opportunity Zones">
+                            💰 Revenue Zones
+                        </button>
+                    </div>
+
+                    <!-- Golden Zone Finder -->
+                    <div class="slider-row" style="margin-top: 8px;">
+                        <span class="slider-label">Competitor Range</span>
+                        <input type="range" id="competitor-radius" min="1" max="5" value="2"
+                            class="slider-modern slider-gold">
+                        <span id="competitor-radius-value" class="slider-value">2 km</span>
+                    </div>
+
+                    <div class="gap-actions">
+                        <button id="btn-strategic-analysis" class="btn-small btn-strategic">
+                            ⭐ Find Golden Zones
+                        </button>
+                        <button id="btn-full-report" class="btn-small btn-strategic">
+                            📋 Full BI Report
+                        </button>
+                    </div>
+
+                    <!-- Strategic Report Area -->
+                    <div id="strategic-report" class="gap-report hidden"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="panel-footer">
+                    <button id="btn-apply-filter" class="btn-primary">
+                        <span>🔥</span> Hiển thị Heatmap
+                    </button>
+                    <button id="btn-clear-heatmap" class="btn-secondary">
+                        <span>🗑️</span> Xóa Heatmap
+                    </button>
+                    <button id="btn-clear-all" class="btn-secondary">
+                        <span>🧹</span> Xóa tất cả layers
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Map Container -->
+            <div class="map-wrapper">
+                <div id="map" class="map-container"></div>
+
+                <!-- Map Legend -->
+                <div id="map-legend" class="map-legend glass-panel">
+                    <h4>Chú thích</h4>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <span class="legend-color"
+                                style="background: linear-gradient(90deg, rgba(255,107,107,0.3), rgba(255,107,107,1))"></span>
+                            <span>Mật độ đơn hàng (đỏ = cao)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color"
+                                style="background: linear-gradient(90deg, rgba(59,130,246,0.3), rgba(239,68,68,1))"></span>
+                            <span>Vùng cần phát tờ rơi</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-marker">🏪</span>
+                            <span>Siêu thị Erablue</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-marker">🎯</span>
+                            <span>Điểm tiềm năng</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Controls -->
+                <div id="map-controls" class="map-controls">
+                    <button id="btn-zoom-in" class="map-control-btn" title="Phóng to">+</button>
+                    <button id="btn-zoom-out" class="map-control-btn" title="Thu nhỏ">−</button>
+                    <button id="btn-locate" class="map-control-btn" title="Về trung tâm">⌖</button>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div id="loading-overlay" class="loading-overlay hidden">
+                    <div class="loading-spinner"></div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+            </div>
+
+            <!-- Statistics Panel (Right Sidebar) -->
+            <aside id="stats-panel" class="stats-panel glass-panel">
+                <div class="panel-header">
+                    <h2>📊 Thống kê</h2>
+                    <button id="btn-collapse-stats" class="btn-icon" title="Thu gọn">
+                        <span>›</span>
+                    </button>
+                </div>
+
+                <div class="panel-content">
+                    <!-- Overview Stats -->
+                    <div class="stats-overview">
+                        <div class="stat-card">
+                            <div class="stat-icon">🏪</div>
+                            <div class="stat-info">
+                                <span id="stat-stores" class="stat-value">0</span>
+                                <span class="stat-label">Siêu thị</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📦</div>
+                            <div class="stat-info">
+                                <span id="stat-orders" class="stat-value">0</span>
+                                <span class="stat-label">Đơn hàng</span>
+                            </div>
+                        </div>
+                        <div class="stat-card highlight">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-info">
+                                <span id="stat-revenue" class="stat-value">0</span>
+                                <span class="stat-label">Doanh thu</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📏</div>
+                            <div class="stat-info">
+                                <span id="stat-avg-distance" class="stat-value">0</span>
+                                <span class="stat-label">KM trung bình</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Stores -->
+                    <div class="stats-section">
+                        <h3>🏆 Top 5 Siêu thị</h3>
+                        <div id="top-stores" class="top-stores-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Distance Distribution -->
+                    <div class="stats-section">
+                        <h3>📍 Phân bố khoảng cách</h3>
+                        <div id="distance-chart" class="distance-chart">
+                            <div class="chart-bar" data-range="0-3km">
+                                <div class="bar-fill" style="--percentage: 0%"></div>
+                                <span class="bar-label">0-3km</span>
+                                <span class="bar-value">0%</span>
+                            </div>
+                            <div class="chart-bar" data-range="3-5km">
+                                <div class="bar-fill" style="--percentage: 0%"></div>
+                                <span class="bar-label">3-5km</span>
+                                <span class="bar-value">0%</span>
+                            </div>
+                            <div class="chart-bar" data-range="5-10km">
+                                <div class="bar-fill" style="--percentage: 0%"></div>
+                                <span class="bar-label">5-10km</span>
+                                <span class="bar-value">0%</span>
+                            </div>
+                            <div class="chart-bar" data-range="10km+">
+                                <div class="bar-fill" style="--percentage: 0%"></div>
+                                <span class="bar-label">10km+</span>
+                                <span class="bar-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Store Details (shown when store selected) -->
+                    <div id="store-details" class="stats-section store-details hidden">
+                        <h3>📋 Chi tiết siêu thị</h3>
+                        <div id="store-details-content">
+                            <!-- Populated when store clicked -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Mobile Bottom Sheet -->
+        <div id="mobile-bottom-sheet" class="mobile-bottom-sheet">
+            <div class="sheet-handle-area" id="sheet-handle-area">
+                <div class="sheet-handle"></div>
+            </div>
+            <div class="sheet-header">
+                <h3>🏛️ Điều khiển</h3>
+                <button id="btn-sheet-close" class="btn-icon">×</button>
+            </div>
+            <div class="sheet-tabs">
+                <button class="sheet-tab active" data-tab="filters">🎯 Lọc</button>
+                <button class="sheet-tab" data-tab="stores">🏪 Stores</button>
+                <button class="sheet-tab" data-tab="gaps">📍 Gaps</button>
+            </div>
+            <div class="sheet-content">
+                <!-- Filters Tab -->
+                <div id="sheet-filters" class="sheet-panel">
+                    <div class="sheet-section">
+                        <div class="sheet-section-title">🏢 Thành phố</div>
+                        <select id="mobile-city-filter" class="select-modern">
+                            <option value="">-- Tất cả --</option>
+                        </select>
+                    </div>
+                    <div class="sheet-section">
+                        <div class="sheet-section-title">📅 Thời gian</div>
+                        <div class="quick-dates">
+                            <button class="quick-date-btn" data-range="7">7 ngày</button>
+                            <button class="quick-date-btn" data-range="30">30 ngày</button>
+                            <button class="quick-date-btn active" data-range="all">Tất cả</button>
+                        </div>
+                    </div>
+                    <div class="sheet-section">
+                        <div class="sheet-section-title">🔥 Cường độ Heatmap</div>
+                        <div class="slider-row">
+                            <input type="range" id="mobile-intensity" min="10" max="50" value="25"
+                                class="slider-modern">
+                            <span id="mobile-intensity-value" class="slider-value">25</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Stores Tab -->
+                <div id="sheet-stores" class="sheet-panel" style="display: none;">
+                    <div class="store-actions">
+                        <button id="mobile-select-all" class="btn-small">Chọn tất cả</button>
+                        <button id="mobile-deselect-all" class="btn-small">Bỏ chọn</button>
+                    </div>
+                    <div id="mobile-store-list" class="store-list"></div>
+                </div>
+                <!-- Gaps Tab -->
+                <div id="sheet-gaps" class="sheet-panel" style="display: none;">
+                    <div class="sheet-section">
+                        <div class="sheet-section-title">🎯 Bán kính phục vụ</div>
+                        <div class="slider-row">
+                            <input type="range" id="mobile-coverage-radius" min="2" max="10" value="5"
+                                class="slider-modern">
+                            <span id="mobile-radius-value" class="slider-value">5 km</span>
+                        </div>
+                    </div>
+                    <div class="gap-actions">
+                        <button id="mobile-show-coverage" class="btn-small btn-coverage">⭕ Bán kính</button>
+                        <button id="mobile-find-gaps" class="btn-small btn-gaps">🎯 Vùng trống</button>
+                    </div>
+                    <div id="mobile-gap-report" class="gap-report hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Stats Bar -->
+        <div class="mobile-stats-bar">
+            <div class="mobile-stats-row">
+                <div class="mobile-stat">
+                    <span id="mobile-stat-stores" class="mobile-stat-value">25</span>
+                    <span class="mobile-stat-label">Stores</span>
+                </div>
+                <div class="mobile-stat">
+                    <span id="mobile-stat-orders" class="mobile-stat-value">8.6K</span>
+                    <span class="mobile-stat-label">Đơn hàng</span>
+                </div>
+                <div class="mobile-stat">
+                    <span id="mobile-stat-distance" class="mobile-stat-value">3.2</span>
+                    <span class="mobile-stat-label">KM TB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Quick Actions -->
+        <div class="mobile-quick-actions">
+            <div class="quick-action-row">
+                <button id="chip-heatmap" class="quick-action-chip">🔥 Heatmap</button>
+                <button id="chip-gaps" class="quick-action-chip">🎯 Gaps</button>
+                <button id="chip-coverage" class="quick-action-chip">⭕ Bán kính</button>
+                <button id="chip-clear" class="quick-action-chip">🧹 Xóa</button>
+            </div>
+        </div>
+
+        <!-- Mobile FAB -->
+        <div class="mobile-fab-container">
+            <button id="fab-gaps" class="mobile-fab secondary" title="Tìm vùng trống">🎯</button>
+            <button id="fab-heatmap" class="mobile-fab primary" title="Hiện Heatmap">🔥</button>
+        </div>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-nav">
+            <div class="mobile-nav-items">
+                <button id="nav-map" class="mobile-nav-item active">
+                    <span class="nav-icon">🗺️</span>
+                    <span>Bản đồ</span>
+                </button>
+                <button id="nav-stores" class="mobile-nav-item">
+                    <span class="nav-icon">🏪</span>
+                    <span>Stores</span>
+                </button>
+                <button id="nav-analytics" class="mobile-nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Thống kê</span>
+                </button>
+                <button id="nav-settings" class="mobile-nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Cài đặt</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/data/stores.js"></script>
+    <script src="js/data/orders.js"></script>
+    <script src="js/data/cities.js"></script>
+    <script src="js/data/competitors.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/heatmap.js"></script>
+    <script src="js/stores.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/coverage.js"></script>
+    <script src="js/competitors.js"></script>
+    <script src="js/mobile.js"></script>
+    <script src="js/strategic-intelligence.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
