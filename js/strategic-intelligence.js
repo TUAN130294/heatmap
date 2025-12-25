@@ -9,10 +9,26 @@ class StrategicIntelligence {
         this.revenueOpportunities = [];
     }
 
+    // Helper to get the map object from either App or EnterpriseApp
+    getMap() {
+        if (window.EnterpriseApp && window.EnterpriseApp.map) {
+            return window.EnterpriseApp.map;
+        }
+        if (window.App && window.App.map) {
+            return window.App.map;
+        }
+        return null;
+    }
+
     // ===== MARKET SHARE ANALYSIS =====
     // Estimate market share based on coverage and competitor density
     calculateMarketShare() {
-        const bounds = window.App.map.getBounds();
+        const map = this.getMap();
+        if (!map) {
+            console.error('Map not initialized');
+            return { erablueShare: 0, competitorShare: 0, contestedShare: 0, uncoveredShare: 0 };
+        }
+        const bounds = map.getBounds();
         const gridSize = 0.01; // ~1km cells
 
         let totalCells = 0;
@@ -156,7 +172,12 @@ class StrategicIntelligence {
     // ===== EXPANSION PRIORITY MATRIX =====
     // Identify best locations for new store opening
     calculateExpansionPriority(searchRadiusKm = 10) {
-        const bounds = window.App.map.getBounds();
+        const map = this.getMap();
+        if (!map) {
+            console.error('Map not initialized');
+            return [];
+        }
+        const bounds = map.getBounds();
         const gridSize = 0.015; // ~1.5km cells
 
         const candidates = [];
@@ -258,7 +279,12 @@ class StrategicIntelligence {
     calculateRevenueOpportunities() {
         const zones = [];
         const gridSize = 0.012;
-        const bounds = window.App.map.getBounds();
+        const map = this.getMap();
+        if (!map) {
+            console.error('Map not initialized');
+            return [];
+        }
+        const bounds = map.getBounds();
 
         for (let lat = bounds.getSouth(); lat <= bounds.getNorth(); lat += gridSize) {
             for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += gridSize) {
@@ -314,7 +340,12 @@ class StrategicIntelligence {
     calculateCACZones() {
         const zones = [];
         const gridSize = 0.015;
-        const bounds = window.App.map.getBounds();
+        const map = this.getMap();
+        if (!map) {
+            console.error('Map not initialized');
+            return [];
+        }
+        const bounds = map.getBounds();
 
         // Assumed marketing cost per km² per month
         const baseCostPerKm2 = 5000000; // IDR
